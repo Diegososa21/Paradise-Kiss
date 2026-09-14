@@ -13,7 +13,12 @@
     <p class="intro">
       A bright little space for inspiration, connection, and the moments that make life feel like yours, just live how you want to.
     </p>
-    <a class="primary-action" href="#discover">Start exploring <span aria-hidden="true">&#8594;</span></a>
+    <div class="hero-actions">
+      <a class="primary-action" href="#discover">Start exploring <span aria-hidden="true">&#8594;</span></a>
+      <button class="secondary-action" type="button" (click)="showForm = true">
+        Artikel hinzufügen <span aria-hidden="true">&#8599;</span>
+      </button>
+    </div>
   </section>
 
   <section class="discover" id="discover" aria-labelledby="discover-title">
@@ -39,4 +44,13 @@
       </a>
     </div>
   </section>
+
+    @if (showForm) {
+    <div class="overlay" (click)="showForm = false">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <app-resource-form />
+      </div>
+    </div>
+  }
+
 </main>

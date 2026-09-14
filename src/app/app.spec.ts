@@ -1,10 +1,13 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { App } from './app';
+import { HomeComponent } from './home/home';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
+      providers: [provideRouter([])],
     })
       .compileComponents();
   });
@@ -16,9 +19,10 @@ describe('App', () => {
   });
 
   it('should render the home screen', async () => {
-    const fixture = TestBed.createComponent(App);
+    const fixture = TestBed.createComponent(HomeComponent);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Find your kind of beautiful.');
+    expect(compiled.querySelector('h1')?.textContent).toContain('Find Yourself Kind in happiness.');
+    expect(compiled.querySelector('button.secondary-action')?.textContent).toContain('Artikel hinzufügen');
   });
 });
