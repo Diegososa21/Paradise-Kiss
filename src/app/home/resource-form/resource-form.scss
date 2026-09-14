@@ -11,10 +11,34 @@
         }
 
         .modal {
+            position: relative;
             background-color: #a3a3a3;
             padding: 20px;
             border-radius: 5px;
             width: 400px;
+
+            .close-button {
+                position: absolute;
+                top: 16px;
+                right: 16px;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                border: none;
+                background: rgba(0, 0, 0, 0.08);
+                color: inherit;
+                font-size: 16px;
+                line-height: 1;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background 0.15s ease;
+
+                &:hover {
+                    background: rgba(0, 0, 0, 0.15);
+                }
+            }
         }
 
         .form-group {

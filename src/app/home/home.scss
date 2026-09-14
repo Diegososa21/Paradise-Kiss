@@ -5,7 +5,7 @@
 
 .home-shell {
   --ink: #242124;
-  --paper: #fffaf4;
+  --paper: black;
   --coral: #ff725e;
   --yellow: #f6cf55;
   --blue: #8ec5d6;
@@ -138,21 +138,28 @@ h1 em {
 }
 
 .secondary-action {
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  box-sizing: border-box;
+  appearance: none;
   display: inline-flex;
   align-items: center;
-  gap: 0.7rem;
-  padding: 0.85rem 0.2rem;
-  color: var(--ink);
+  gap: 1rem;
+  padding: 0.9rem 1.2rem;
+  border-radius: 999px;
+  color: var(--paper);
+  background: var(--ink);
   font-family: 'Trebuchet MS', sans-serif;
   font-size: 0.85rem;
   font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 0.3rem;
+  transition: transform 180ms ease, background 180ms ease;
 }
 
-.secondary-action:hover,
+.secondary-action,
 .secondary-action:focus-visible {
-  color: var(--coral);
+  background: var(--coral);
+  transform: translateY(-3px);
 }
 
 .discover {

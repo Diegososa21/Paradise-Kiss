@@ -14,10 +14,15 @@
       A bright little space for inspiration, connection, and the moments that make life feel like yours, just live how you want to.
     </p>
     <div class="hero-actions">
-      <a class="primary-action" href="#discover">Start exploring <span aria-hidden="true">&#8594;</span></a>
-      <button class="secondary-action" type="button" (click)="showForm = true">
-        Artikel hinzufügen <span aria-hidden="true">&#8599;</span>
-      </button>
+
+    <a class="primary-action" href="#discover">Start exploring <span aria-hidden="true">&#8594;</span></a>
+
+
+
+    <button class="secondary-action" type="button" (click)="showForm = true">
+      Artikel hinzufügen <span aria-hidden="true">&#8599;</span>
+    </button>
+      
     </div>
   </section>
 
@@ -46,11 +51,17 @@
   </section>
 
     @if (showForm) {
-    <div class="overlay" (click)="showForm = false">
       <div class="modal" (click)="$event.stopPropagation()">
         <app-resource-form />
       </div>
+  }
+
+    @if (showForm) {
+  <div class="overlay" (click)="showForm = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <app-resource-form (close)="showForm = false" />
     </div>
+  </div>
   }
 
 </main>
