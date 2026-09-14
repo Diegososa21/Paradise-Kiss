@@ -427,3 +427,16 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Angular
+/dist
+/tmp
+/out-tsc
+/bazel-out
+/.angular/cache
+/coverage
+npm-debug.log
+yarn-error.log
+
+# macOS
+.DS_Store
