@@ -1,0 +1,37 @@
+{
+  "sources": [
+    {
+      "id": "hauptlager",
+      "label": "Hauptlager",
+      "url_env": "SUPABASE_URL",
+      "key_env": "SUPABASE_PUBLISHABLE_KEY",
+      "command_rpc": "",
+      "snapshot_rpc": "",
+      "entities": {
+        "products": {
+          "table": "EURE_ARTIKELTABELLE",
+          "schema": "public",
+          "fields": {
+            "id": "id", "sku": "sku", "name": "name", "description": "description",
+            "size": "size", "material": "material", "gender": "gender", "manufacturer": "manufacturer",
+            "quantity": "quantity", "min_stock": "min_stock", "location_id": "location_id",
+            "purchase_price": "purchase_price", "sale_price": "sale_price", "archived": "archived",
+            "created_at": "created_at", "updated_at": "updated_at", "last_sale_at": "last_sale_at", "last_purchase_at": "last_purchase_at"
+          }
+        },
+        "locations": {
+          "table": "EURE_LAGERORTTABELLE",
+          "fields": {"id": "id", "name": "name", "shelf": "shelf", "bin": "bin", "capacity": "capacity"}
+        },
+        "movements": {
+          "table": "EURE_BEWEGUNGSTABELLE",
+          "fields": {"id": "id", "product_id": "product_id", "type": "type", "quantity": "quantity", "delta": "delta", "stock_after": "stock_after", "occurred_at": "occurred_at", "note": "note", "reference": "reference", "from_location_id": "from_location_id", "to_location_id": "to_location_id"}
+        },
+        "orders": {
+          "table": "EURE_BESTELLTABELLE",
+          "fields": {"id": "id", "product_id": "product_id", "quantity": "quantity", "expected_date": "expected_date", "status": "status", "created_at": "created_at", "note": "note"}
+        }
+      }
+    }
+  ]
+}

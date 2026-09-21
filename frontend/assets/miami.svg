@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" fill="none">
+  <defs>
+    <linearGradient
+      id="sky"
+      x1="0"
+      y1="0"
+      x2="1200"
+      y2="300"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="#49324e" />
+      <stop offset=".45" stop-color="#956eab" />
+      <stop offset=".8" stop-color="#e8a8c1" />
+      <stop offset="1" stop-color="#c985ba" />
+    </linearGradient>
+    <linearGradient
+      id="sea"
+      x1="0"
+      y1="190"
+      x2="0"
+      y2="300"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="#b583b8" />
+      <stop offset="1" stop-color="#655f96" />
+    </linearGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#ffe7c9" />
+      <stop offset="1" stop-color="#f4b3d0" />
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop stop-color="#facfd6" stop-opacity=".7" />
+      <stop offset="1" stop-color="#e4abd9" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="shade">
+      <stop stop-color="#33273e" stop-opacity=".85" />
+      <stop offset=".65" stop-color="#403046" stop-opacity="0" />
+    </linearGradient>
+    <g id="palm">
+      <path
+        d="M0 260C14 163 21 107 8 32L18 28C34 104 22 194 18 260Z"
+        fill="#392c4d"
+      />
+      <g fill="#392c4d">
+        <path d="M15 34C-35-5-98 2-119 62-76 26-43 34 15 34Z" />
+        <path d="M15 34C-2-20-62-51-98-27-48-25-22 3 15 34Z" />
+        <path d="M15 34C13-29 47-59 78-55 43-26 41 1 15 34Z" />
+        <path d="M15 34C65-13 121 3 134 35 86 14 59 34 15 34Z" />
+        <path d="M15 34C66 28 95 61 81 102 68 64 36 48 15 34Z" />
+        <path d="M15 34C-27 40-49 87-31 117-29 77-2 60 15 34Z" />
+      </g>
+      <g stroke="#c790b8" stroke-width="1" opacity=".27">
+        <path
+          d="M15 34L-110 51M15 34L-87-22M15 34L70-47M15 34L123 31M15 34L76 91M15 34L-28 106"
+        />
+      </g>
+    </g>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h1200v300H0z" />
+  <ellipse cx="885" cy="118" rx="330" ry="250" fill="url(#glow)" />
+  <circle cx="905" cy="132" r="69" fill="url(#sun)" />
+  <path d="M0 190h1200v110H0z" fill="url(#sea)" />
+  <g stroke="#f5c6d6" opacity=".38">
+    <path
+      d="M771 200h267M802 206h202M748 216h301M821 225h157M755 240h324M800 259h239M695 282h417M591 196h87M501 220h130M1091 214h72M493 260h159"
+    />
+  </g>
+  <path
+    d="M0 271Q270 240 540 278T1200 268V300H0Z"
+    fill="#63527d"
+    opacity=".7"
+  />
+  <use href="#palm" transform="translate(1110 62) scale(1.03)" />
+  <use href="#palm" transform="translate(734 143) scale(.65)" opacity=".7" />
+  <use href="#palm" transform="translate(1240 150) scale(.65)" />
+  <path fill="url(#shade)" d="M0 0h1200v300H0z" />
+  <g stroke="#ffdded" opacity=".12">
+    <path
+      d="M0 289h1200M0 296h1200M0 300l170-60M200 300l130-50M440 300l70-40M660 300v-30M880 300l-70-35M1100 300l-130-40"
+    />
+  </g>
+</svg>
