@@ -1,0 +1,23 @@
+<div class="resource-list">
+  <h2>Alle Einträge</h2>
+
+  @if (loading) {
+    <p>Lädt...</p>
+  }
+
+  @if (error) {
+    <p class="error">{{ error }}</p>
+  }
+
+  @if (!loading && resources.length === 0) {
+    <p>Noch keine Einträge vorhanden.</p>
+  }
+
+  @for (resource of resources; track resource.id) {
+    <div class="resource-card">
+      <strong>{{ resource.name }}</strong>
+      <span>{{ resource.email }}</span>
+      <small>{{ resource.created_at | date:'dd.MM.yyyy HH:mm' }}</small>
+    </div>
+  }
+</div>
