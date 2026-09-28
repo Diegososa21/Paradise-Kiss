@@ -75,10 +75,12 @@ export class LockScreenComponent {
   }
 
   private showError(error: unknown): void {
-    const message =
-      error instanceof HttpErrorResponse && typeof error.error?.detail === 'string'
-        ? error.error.detail
-        : 'Die Verbindung ist fehlgeschlagen. Bitte versuche es erneut.';
+    let message = 'Die Verbindung ist fehlgeschlagen. Bitte versuche es erneut.';
+    if (error instanceof HttpErrorResponse && typeof error.error?.detail === 'string') {
+      message = error.error.detail;
+    } else if (error instanceof HttpErrorResponse && error.status === 403) {
+      message = 'Die Sicherheitsprüfung ist fehlgeschlagen. Lade die Seite neu und versuche es erneut.';
+    }
     this.errorMessage.set(message);
   }
 }

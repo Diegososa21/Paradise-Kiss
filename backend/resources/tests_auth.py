@@ -22,6 +22,7 @@ class AuthApiTests(TestCase):
             data=json.dumps(payload),
             content_type='application/json',
             HTTP_X_XSRF_TOKEN=self.csrf_token(),
+            HTTP_ORIGIN='http://localhost:4200',
         )
 
     def test_session_is_anonymous_before_login(self):
@@ -29,6 +30,17 @@ class AuthApiTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.json()['authenticated'])
+
+    def test_untrusted_origin_is_rejected(self):
+        response = self.client.post(
+            '/auth/login/',
+            data=json.dumps({'username': 'diego', 'password': 'irrelevant'}),
+            content_type='application/json',
+            HTTP_X_XSRF_TOKEN=self.csrf_token(),
+            HTTP_ORIGIN='https://attacker.example',
+        )
+
+        self.assertEqual(response.status_code, 403)
 
     def test_approved_user_can_login_and_logout(self):
         get_user_model().objects.create_user(

@@ -150,20 +150,37 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:4200').rstrip('/')
+
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
     for origin in os.getenv(
         'DJANGO_CORS_ALLOWED_ORIGINS',
-        'http://localhost:4200',
+        'http://localhost:4200,http://127.0.0.1:4200',
     ).split(',')
     if origin.strip()
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
-    for origin in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',')
+    for origin in os.getenv(
+        'DJANGO_CSRF_TRUSTED_ORIGINS',
+        'http://localhost:4200,http://127.0.0.1:4200',
+    ).split(',')
     if origin.strip()
 ]
+
+frontend_origins = [FRONTEND_URL]
+for vercel_host_variable in ('VERCEL_URL', 'VERCEL_PROJECT_PRODUCTION_URL'):
+    vercel_host = os.getenv(vercel_host_variable)
+    if vercel_host:
+        frontend_origins.append(f'https://{vercel_host}')
+
+for frontend_origin in frontend_origins:
+    if frontend_origin not in CORS_ALLOWED_ORIGINS:
+        CORS_ALLOWED_ORIGINS.append(frontend_origin)
+    if frontend_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(frontend_origin)
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = not DEBUG
@@ -178,7 +195,6 @@ APP_ALLOWED_USERNAMES = {
     for username in os.getenv('APP_ALLOWED_USERNAMES', 'diego,nico,fabian').split(',')
     if username.strip()
 }
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:4200').rstrip('/')
 PASSWORD_RESET_TIMEOUT = int(os.getenv('PASSWORD_RESET_TIMEOUT', '86400'))
 
 CSRF_COOKIE_NAME = 'XSRF-TOKEN'
