@@ -90,14 +90,15 @@ if use_sqlite:
         }
     }
 elif database_url:
-    DATABASES = {
-        'default': dj_database_url.parse(
-            database_url,
-            conn_max_age=database_connection_age,
-            conn_health_checks=True,
-            ssl_require=True,
-        )
-    }
+    database_config = dj_database_url.parse(
+        database_url,
+        conn_max_age=database_connection_age,
+        conn_health_checks=True,
+        ssl_require=True,
+    )
+    if database_pool_mode == 'transaction':
+        database_config.setdefault('OPTIONS', {})['prepare_threshold'] = None
+    DATABASES = {'default': database_config}
 elif all([database_name, database_user, database_password, database_host]):
     DATABASES = {
         'default': {
@@ -115,15 +116,12 @@ elif all([database_name, database_user, database_password, database_host]):
             },
         }
     }
-elif DEBUG:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
 else:
-    raise RuntimeError('DATABASE_URL is required when DJANGO_DEBUG is false')
+    raise RuntimeError(
+        'Supabase database configuration is missing. Copy backend/.env.example '
+        'to backend/.env and ask the project owner for DB_PASSWORD. To use an '
+        'isolated SQLite database intentionally, set DJANGO_USE_SQLITE=true.'
+    )
 
 AUTH_PASSWORD_VALIDATORS = [
     {

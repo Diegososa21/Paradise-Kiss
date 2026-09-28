@@ -53,12 +53,21 @@ source .venv/bin/activate
 pip install -e .
 cp .env.example .env
 python manage.py migrate
+python manage.py check_team_setup
 python manage.py runserver
 ```
 
-Antes de usar Supabase, reemplaza `DATABASE_URL` en `backend/.env` con la URL
-del Transaction Pooler (puerto `6543`) y una contraseña de base de datos nueva.
-Nunca subas `.env` al repositorio.
+Antes de ejecutar `migrate`, pide al propietario del proyecto por un canal
+privado estos dos valores y reemplázalos en `backend/.env`:
+
+- `DJANGO_SECRET_KEY`: debe ser el mismo para los tres miembros, porque firma
+  los enlaces de primera contraseña.
+- `DB_PASSWORD`: contraseña del Transaction Pooler de Supabase.
+
+El host, usuario, puerto `6543` y el resto de la configuración compartida ya
+están en `.env.example`. Nunca subas `.env` ni esos dos secretos al repositorio.
+`check_team_setup` confirma que la laptop ve la base compartida, los productos y
+los tres usuarios; el servidor ya no cambia silenciosamente a una SQLite vacía.
 
 ### Primera contraseña del equipo
 
@@ -74,6 +83,10 @@ python manage.py activation_links
 
 Cada enlace caduca en 24 horas y deja de funcionar inmediatamente después de
 crear la contraseña. No publiques estos enlaces ni los guardes en Git.
+
+Después de la activación, en otra laptop no se vuelve a usar el enlace. Se abre
+`http://localhost:4200/` y se inicia sesión con `diego`, `nico` o `fabian` y la
+contraseña personal configurada.
 
 ### Frontend
 

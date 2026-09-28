@@ -1,7 +1,9 @@
 import json
+from io import StringIO
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
+from django.core.management import call_command
 from django.test import Client, TestCase
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -127,3 +129,19 @@ class AuthApiTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn('too short', response.json()['detail'])
+
+
+class TeamSetupCommandTests(TestCase):
+    def test_reports_shared_team_users(self):
+        User = get_user_model()
+        for username in ('diego', 'nico', 'fabian'):
+            User.objects.create_user(
+                username=username,
+                password='A-secure-test-password-2026!',
+            )
+
+        output = StringIO()
+        call_command('check_team_setup', stdout=output)
+
+        self.assertIn('Shared Supabase connection: OK', output.getvalue())
+        self.assertIn('fabian=ready', output.getvalue())
