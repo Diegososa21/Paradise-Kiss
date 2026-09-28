@@ -1,44 +1,105 @@
-<main class="home-shell">
-  <nav class="topbar" aria-label="Main navigation">
-    <a class="brand" href="/" aria-label="Paradise Kiss home">
-      <span class="brand-mark" aria-hidden="true">PK</span>
-      <span>Paradise Kiss</span>
+<main class="dashboard-shell" data-figma-node="7:184">
+  <aside class="sidebar" data-figma-node="7:185">
+    <a class="brand" routerLink="/" aria-label="Paradise Kiss Inventory Studio">
+      <strong>PARADISE KISS</strong>
+      <span>Inventory Studio</span>
     </a>
-    <button class="menu-button" type="button" aria-label="Open menu">Menu</button>
-  </nav>
 
-  <section class="hero" aria-labelledby="home-title">
-    <p class="eyebrow">Welcome to your new chapter</p>
-    <h1 id="home-title">happines<em>and</em> fullness  .</h1>
-    <p class="intro">
-      A bright little space for inspiration, connection, and the moments that make life feel like yours, just live how you want to.
-    </p>
-    <a class="primary-action" href="#discover">Start exploring <span aria-hidden="true">&#8594;</span></a>
-    <a class="secondary-action" routerLink="/resources/new">Artikel hinzufügen <span aria-hidden="true">&#8594;</span></a>
-    <a class="secondary-action" routerLink="/resources">Einträge ansehen <span aria-hidden="true">&#8594;</span></a>
-  </section>
+    <nav class="sidebar-nav" aria-label="Hauptnavigation">
+      <a class="active" routerLink="/" aria-current="page">Home</a>
+      <a routerLink="/resources/new">Artikel</a>
+      <a routerLink="/resources">Bestand</a>
+      <a href="#sales-trend">Verkäufe</a>
+      <a href="#top-products">Analyse</a>
+    </nav>
+  </aside>
 
-  <section class="discover" id="discover" aria-labelledby="discover-title">
-    <div class="section-heading">
-      <p class="eyebrow">Made for curious hearts</p>
-      <h2 id="discover-title">What are you in the mood for?</h2>
-    </div>
-    <div class="choice-grid">
-      <a class="choice-card choice-card--coral" href="#inspiration">
-        <span class="card-number">01</span>
-        <span class="card-title">Get inspired</span>
-        <span class="card-arrow" aria-hidden="true">&#8599;</span>
-      </a>
-      <a class="choice-card choice-card--yellow" href="#community">
-        <span class="card-number">02</span>
-        <span class="card-title">Meet your people</span>
-        <span class="card-arrow" aria-hidden="true">&#8599;</span>
-      </a>
-      <a class="choice-card choice-card--blue" href="#journal">
-        <span class="card-number">03</span>
-        <span class="card-title">Make something</span>
-        <span class="card-arrow" aria-hidden="true">&#8599;</span>
-      </a>
-    </div>
+  <section class="dashboard-content">
+    <header class="dashboard-header">
+      <div>
+        <h1>Dein Lager heute</h1>
+        <p>Die wichtigsten Informationen zuerst.</p>
+      </div>
+      <a class="add-button" routerLink="/resources/new">+ Neuer Artikel</a>
+    </header>
+
+    <section class="kpi-grid" aria-label="Lagerkennzahlen">
+      @for (kpi of kpis; track kpi.label) {
+        <article class="kpi-card">
+          <span [class]="'color-chip color-chip--' + kpi.tone" aria-hidden="true"></span>
+          <div class="kpi-copy">
+            <span class="kpi-label">{{ kpi.label }}</span>
+            <strong>{{ kpi.value }}</strong>
+            <small [class.alert]="kpi.alert">{{ kpi.meta }}</small>
+          </div>
+        </article>
+      }
+    </section>
+
+    <section class="middle-grid">
+      <article class="attention-card" data-figma-node="7:218">
+        <header>
+          <h2>Was braucht Aufmerksamkeit?</h2>
+          <p>Prioritäten für den heutigen Arbeitstag</p>
+        </header>
+
+        <div class="attention-list">
+          @for (item of attentionItems; track item.name) {
+            <div class="attention-row">
+              <span [class]="'status-dot status-dot--' + item.tone" aria-hidden="true"></span>
+              <strong>{{ item.name }}</strong>
+              <span>{{ item.quantity }} Stk.</span>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="quick-card" data-figma-node="7:233">
+        <h2>Schnellaktionen</h2>
+        <div class="quick-grid">
+          <a class="quick-action quick-action--cyan" routerLink="/resources/new">Wareneingang</a>
+          <a class="quick-action quick-action--pink" href="#sales-trend">Verkauf erfassen</a>
+          <a class="quick-action quick-action--blue" routerLink="/resources">Inventur</a>
+          <a class="quick-action quick-action--orange" href="#top-products">Report öffnen</a>
+        </div>
+      </article>
+    </section>
+
+    <section class="bottom-grid">
+      <article class="trend-card" id="sales-trend" data-figma-node="7:243">
+        <header>
+          <h2>Verkaufstrend</h2>
+          <p>letzte 7 Tage</p>
+        </header>
+
+        <div class="chart" aria-label="Verkaufstrend der letzten sieben Tage">
+          @for (bar of trendBars; track bar.day) {
+            <div class="chart-column">
+              <span
+                [class]="'chart-bar chart-bar--' + bar.tone"
+                [style.height.px]="bar.height"
+                [attr.aria-label]="bar.day + ': ' + bar.value + ' Verkäufe'"
+              ></span>
+              <small>{{ bar.day }}</small>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="products-card" id="top-products" data-figma-node="7:260">
+        <h2>Top-Produkte</h2>
+        <ol>
+          @for (product of topProducts; track product.name; let rank = $index) {
+            <li>
+              <span [class]="'rank rank--' + product.tone">{{ rank + 1 }}</span>
+              <div>
+                <strong>{{ product.name }}</strong>
+                <small>{{ product.sales }} Verkäufe</small>
+              </div>
+            </li>
+          }
+        </ol>
+      </article>
+    </section>
   </section>
 </main>

@@ -1,1 +1,19 @@
-/* You can add global styles to this file, and also import other style files */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #fff5fc;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+*:focus-visible {
+  outline: 3px solid #42d6eb;
+  outline-offset: 3px;
+}
