@@ -9,8 +9,9 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 - `src/`: frontend Angular.
 - `backend/`: API Django REST.
 - Supabase: base de datos PostgreSQL usada por Django.
-- `/api/resources/`: listado y creación de prendas con nombre, descripción,
+- `/api/tables/resources/`: listado y creación de prendas con nombre, descripción,
   talla, categoría, fabricante, material y género.
+- `/api/auth/`: sesión Django protegida por CSRF para Diego, Nico y Fabian.
 
 ## Desarrollo local
 
@@ -29,8 +30,23 @@ python manage.py runserver
 ```
 
 Antes de usar Supabase, reemplaza `DATABASE_URL` en `backend/.env` con la URL
-del Session Pooler y una contraseña de base de datos nueva. Nunca subas `.env`
-al repositorio.
+del Transaction Pooler (puerto `6543`) y una contraseña de base de datos nueva.
+Nunca subas `.env` al repositorio.
+
+### Primera contraseña del equipo
+
+Los usuarios `diego`, `nico` y `fabian` se activan mediante enlaces firmados de
+un solo uso. El administrador genera los enlaces en su terminal y envía cada uno
+por un canal privado:
+
+```bash
+cd backend
+source .venv/bin/activate
+python manage.py activation_links
+```
+
+Cada enlace caduca en 24 horas y deja de funcionar inmediatamente después de
+crear la contraseña. No publiques estos enlaces ni los guardes en Git.
 
 ### Frontend
 
@@ -53,6 +69,10 @@ estas variables de entorno:
 - `DJANGO_ALLOWED_HOSTS`
 - `DJANGO_CORS_ALLOWED_ORIGINS`
 - `DJANGO_CSRF_TRUSTED_ORIGINS`
+- `APP_ALLOWED_USERNAMES=diego,nico,fabian`
+- `FRONTEND_URL`
+- `DB_POOL_MODE=transaction`
+- `DB_CONN_MAX_AGE=0`
 
 La contraseña que estuvo escrita en `Sandbox` debe rotarse antes de desplegar.
 

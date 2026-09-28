@@ -2,6 +2,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { Resource } from '../models/resource.model';
+import { AuthService } from '../services/auth.service';
 import { ResourceService } from '../services/resource.service';
 
 @Component({
@@ -13,6 +14,7 @@ import { ResourceService } from '../services/resource.service';
 })
 export class HomeComponent implements OnInit {
   private readonly resourceService = inject(ResourceService);
+  protected readonly auth = inject(AuthService);
 
   protected readonly resources = signal<Resource[]>([]);
   protected readonly loading = signal(true);
@@ -80,5 +82,9 @@ export class HomeComponent implements OnInit {
         next: (resources) => this.resources.set(resources),
         error: () => this.resourceError.set('Die Datenbank konnte nicht geladen werden.'),
       });
+  }
+
+  protected logout(): void {
+    this.auth.logout().subscribe();
   }
 }

@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -6,6 +7,11 @@ from .models import Category, Gender, Manufacturer, resources
 
 class ResourceApiTests(APITestCase):
     def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username='diego',
+            password='A-secure-test-password-2026!',
+        )
+        self.client.force_authenticate(user=self.user)
         self.category = Category.objects.create(name='Jackets')
         self.gender = Gender.objects.create(name='Unisex')
         self.manufacturer = Manufacturer.objects.create(
@@ -39,6 +45,13 @@ class ResourceApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
+    def test_rejects_anonymous_requests(self):
+        self.client.force_authenticate(user=None)
+
+        response = self.client.get('/tables/resources/')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_creates_resource(self):
         response = self.client.post(
             '/tables/resources/',
@@ -70,5 +83,3 @@ class ResourceApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-# Create your tests here.

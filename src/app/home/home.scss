@@ -126,6 +126,80 @@ h2,
   font-size: 13px;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-session {
+  display: flex;
+  min-width: 210px;
+  min-height: 54px;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 7px 5px 5px;
+  border: 1px solid #eedfed;
+  border-radius: 999px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.user-session img {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-session > div {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+
+.user-session strong {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-session span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #2ba661;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.user-session i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2ba661;
+}
+
+.user-session button {
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--muted);
+  background: #f8eef7;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.user-session button:hover,
+.user-session button:focus-visible {
+  color: #fff;
+  background: var(--pink-dark);
+}
+
 .add-button {
   display: inline-flex;
   min-width: 196px;
@@ -667,6 +741,15 @@ h2 {
   .dashboard-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .header-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .user-session {
+    width: min(100%, 310px);
   }
 
   .inventory-card > header {
