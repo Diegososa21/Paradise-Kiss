@@ -5,8 +5,18 @@ from .models import resources
 
 
 class ResourceApiTests(APITestCase):
+    resource_data = {
+        'name': 'Denim jacket',
+        'desc': 'Blue oversized jacket',
+        'size': 'M',
+        'category': 'Jackets',
+        'manufacurer': 'Paradise Kiss',
+        'material': 'Denim',
+        'gender': 'Unisex',
+    }
+
     def test_lists_resources(self):
-        resources.objects.create(name='Test', email='test@example.com')
+        resources.objects.create(**self.resource_data)
 
         response = self.client.get('/resources/')
 
@@ -16,15 +26,17 @@ class ResourceApiTests(APITestCase):
     def test_creates_resource(self):
         response = self.client.post(
             '/resources/',
-            {'name': 'New resource', 'email': 'new@example.com'},
+            self.resource_data,
             format='json',
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(resources.objects.count(), 1)
+        self.assertNotIn('email', response.data)
+        self.assertEqual(response.data['material'], 'Denim')
 
     def test_does_not_allow_resource_updates(self):
-        resource = resources.objects.create(name='Test', email='test@example.com')
+        resource = resources.objects.create(**self.resource_data)
 
         response = self.client.patch(
             f'/resources/{resource.id}/',

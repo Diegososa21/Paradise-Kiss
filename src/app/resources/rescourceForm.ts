@@ -17,7 +17,12 @@ export class RescourceFormComponent {
 
   protected readonly form = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(200)]],
-    email: ['', [Validators.required, Validators.email]],
+    desc: ['', [Validators.required, Validators.maxLength(200)]],
+    size: ['', [Validators.required, Validators.maxLength(10)]],
+    category: ['', [Validators.required, Validators.maxLength(200)]],
+    manufacurer: ['', [Validators.required, Validators.maxLength(200)]],
+    material: ['', [Validators.required, Validators.maxLength(200)]],
+    gender: ['', [Validators.required, Validators.maxLength(200)]],
   });
 
   protected submitting = false;

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Resource } from '../models/resource.model';
+import { CreateResource, Resource } from '../models/resource.model';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +15,7 @@ export class ResourceService {
     return this.http.get<Resource[]>(this.baseUrl);
   }
 
-  create(resource: Pick<Resource, 'name' | 'email'>): Observable<Resource> {
+  create(resource: CreateResource): Observable<Resource> {
     return this.http.post<Resource>(this.baseUrl, resource);
   }
 }

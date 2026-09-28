@@ -9,7 +9,8 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 - `src/`: frontend Angular.
 - `backend/`: API Django REST.
 - Supabase: base de datos PostgreSQL usada por Django.
-- `/api/resources/`: listado y creación de recursos.
+- `/api/resources/`: listado y creación de prendas con nombre, descripción,
+  talla, categoría, fabricante, material y género.
 
 ## Desarrollo local
 

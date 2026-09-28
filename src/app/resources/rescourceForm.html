@@ -14,12 +14,43 @@
       </div>
 
       <div class="form-group">
-        <label for="email">E-Mail:</label>
-        <input type="email" id="email" formControlName="email" autocomplete="email">
-        @if (form.controls.email.touched && form.controls.email.invalid) {
-          <small class="error">Bitte eine gültige E-Mail-Adresse eingeben.</small>
+        <label for="desc">Beschreibung:</label>
+        <textarea id="desc" formControlName="desc" rows="3"></textarea>
+        @if (form.controls.desc.touched && form.controls.desc.invalid) {
+          <small class="error">Bitte eine Beschreibung eingeben.</small>
         }
       </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="size">Größe:</label>
+          <input type="text" id="size" formControlName="size">
+        </div>
+
+        <div class="form-group">
+          <label for="category">Kategorie:</label>
+          <input type="text" id="category" formControlName="category">
+        </div>
+
+        <div class="form-group">
+          <label for="manufacurer">Hersteller:</label>
+          <input type="text" id="manufacurer" formControlName="manufacurer">
+        </div>
+
+        <div class="form-group">
+          <label for="material">Material:</label>
+          <input type="text" id="material" formControlName="material">
+        </div>
+
+        <div class="form-group">
+          <label for="gender">Geschlecht:</label>
+          <input type="text" id="gender" formControlName="gender">
+        </div>
+      </div>
+
+      @if (form.touched && form.invalid) {
+        <small class="error form-error">Bitte alle Felder vollständig ausfüllen.</small>
+      }
 
       <div class="actions">
         <button type="submit" [disabled]="submitting">
