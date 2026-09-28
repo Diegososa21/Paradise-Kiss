@@ -1,0 +1,43 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  padding: clamp(1.5rem, 6vw, 5rem);
+  color: #242124;
+  background: #fffaf4;
+  font-family: 'Trebuchet MS', sans-serif;
+}
+
+.resource-list {
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.back-link {
+  color: inherit;
+}
+
+h2 {
+  margin-block: 2rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.5rem, 7vw, 5rem);
+  font-weight: 400;
+}
+
+.resource-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid rgba(36, 33, 36, 0.25);
+}
+
+.error {
+  color: #a52f20;
+}
+
+@media (max-width: 640px) {
+  .resource-card {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+}

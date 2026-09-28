@@ -1,0 +1,39 @@
+<main class="resource-form-page">
+  <section class="modal" aria-labelledby="resource-form-title">
+    <a class="back-link" routerLink="/">&#8592; Zurück</a>
+    <h1 id="resource-form-title">Artikel hinzufügen</h1>
+    <p>Speichere einen neuen Eintrag in der gemeinsamen Datenbank.</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="form-group">
+        <label for="name">Name:</label>
+        <input type="text" id="name" formControlName="name" autocomplete="name">
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <small class="error">Bitte einen Namen eingeben.</small>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="email">E-Mail:</label>
+        <input type="email" id="email" formControlName="email" autocomplete="email">
+        @if (form.controls.email.touched && form.controls.email.invalid) {
+          <small class="error">Bitte eine gültige E-Mail-Adresse eingeben.</small>
+        }
+      </div>
+
+      <div class="actions">
+        <button type="submit" [disabled]="submitting">
+          {{ submitting ? 'Speichert…' : 'Absenden' }}
+        </button>
+        <button type="button" class="secondary" (click)="form.reset()">Abbrechen</button>
+      </div>
+    </form>
+
+    @if (successMessage) {
+      <p class="success" role="status">{{ successMessage }}</p>
+    }
+    @if (errorMessage) {
+      <p class="error" role="alert">{{ errorMessage }}</p>
+    }
+  </section>
+</main>

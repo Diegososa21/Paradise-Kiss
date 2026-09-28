@@ -130,6 +130,24 @@ h1 em {
   transform: translateY(-3px);
 }
 
+.secondary-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+  color: var(--ink);
+  font-family: 'Trebuchet MS', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3rem;
+}
+
+.secondary-action:hover,
+.secondary-action:focus-visible {
+  color: #bd4f3e;
+}
+
 .discover {
   padding-top: 1.5rem;
   border-top: 1px solid rgba(36, 33, 36, 0.25);
