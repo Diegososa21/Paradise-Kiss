@@ -24,7 +24,7 @@
     </header>
 
     <section class="kpi-grid" aria-label="Lagerkennzahlen">
-      @for (kpi of kpis; track kpi.label) {
+      @for (kpi of kpis(); track kpi.label) {
         <article class="kpi-card">
           <span [class]="'color-chip color-chip--' + kpi.tone" aria-hidden="true"></span>
           <div class="kpi-copy">
@@ -39,16 +39,27 @@
     <section class="middle-grid">
       <article class="attention-card" data-figma-node="7:218">
         <header>
-          <h2>Was braucht Aufmerksamkeit?</h2>
-          <p>Prioritäten für den heutigen Arbeitstag</p>
+          <h2>Neueste Artikel</h2>
+          <p>Direkt aus der gemeinsamen Datenbank</p>
         </header>
 
         <div class="attention-list">
-          @for (item of attentionItems; track item.name) {
+          @if (loading()) {
+            <p class="data-message">Artikel werden geladen…</p>
+          } @else if (resourceError()) {
+            <p class="data-message data-message--error">{{ resourceError() }}</p>
+          } @else if (recentResources().length === 0) {
+            <p class="data-message">Noch keine Artikel vorhanden.</p>
+          }
+
+          @for (item of recentResources(); track item.id; let index = $index) {
             <div class="attention-row">
-              <span [class]="'status-dot status-dot--' + item.tone" aria-hidden="true"></span>
+              <span
+                [class]="'status-dot status-dot--' + itemTones[index % itemTones.length]"
+                aria-hidden="true"
+              ></span>
               <strong>{{ item.name }}</strong>
-              <span>{{ item.quantity }} Stk.</span>
+              <span>{{ item.category }} · {{ item.size }}</span>
             </div>
           }
         </div>
@@ -68,35 +79,34 @@
     <section class="bottom-grid">
       <article class="trend-card" id="sales-trend" data-figma-node="7:243">
         <header>
-          <h2>Verkaufstrend</h2>
-          <p>letzte 7 Tage</p>
+          <h2>Verkaufsdaten</h2>
+          <p>Noch nicht im Datenmodell vorhanden</p>
         </header>
 
-        <div class="chart" aria-label="Verkaufstrend der letzten sieben Tage">
-          @for (bar of trendBars; track bar.day) {
-            <div class="chart-column">
-              <span
-                [class]="'chart-bar chart-bar--' + bar.tone"
-                [style.height.px]="bar.height"
-                [attr.aria-label]="bar.day + ': ' + bar.value + ' Verkäufe'"
-              ></span>
-              <small>{{ bar.day }}</small>
-            </div>
-          }
+        <div class="chart-empty">
+          <span aria-hidden="true">+</span>
+          <strong>Verkäufe später verbinden</strong>
+          <p>Für dieses Diagramm benötigen wir Datum, Produkt und Verkaufsmenge.</p>
         </div>
       </article>
 
       <article class="products-card" id="top-products" data-figma-node="7:260">
-        <h2>Top-Produkte</h2>
+        <h2>Kategorien</h2>
         <ol>
-          @for (product of topProducts; track product.name; let rank = $index) {
+          @for (category of categorySummaries(); track category.name; let rank = $index) {
             <li>
-              <span [class]="'rank rank--' + product.tone">{{ rank + 1 }}</span>
+              <span [class]="'rank rank--' + categoryTones[rank % categoryTones.length]">{{
+                rank + 1
+              }}</span>
               <div>
-                <strong>{{ product.name }}</strong>
-                <small>{{ product.sales }} Verkäufe</small>
+                <strong>{{ category.name }}</strong>
+                <small>{{ category.count }} Artikel</small>
               </div>
             </li>
+          }
+
+          @if (!loading() && categorySummaries().length === 0) {
+            <li class="category-empty">Keine Kategorien verfügbar</li>
           }
         </ol>
       </article>
