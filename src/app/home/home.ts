@@ -1,5 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
+import { Resource } from '../models/resource.model';
+import { ResourceService } from '../services/resource.service';
 
 @Component({
   selector: 'app-home',
@@ -8,34 +11,58 @@ import { RouterLink } from '@angular/router';
   styleUrl: './home.scss',
   templateUrl: './home.html',
 })
-export class HomeComponent {
-  protected readonly kpis = [
-    { label: 'Artikel', value: '1.248', meta: 'heute', tone: 'pink', alert: false },
-    { label: 'Lagerwert', value: '€ 84.230', meta: 'heute', tone: 'blue', alert: false },
-    { label: 'Niedrig', value: '18', meta: '3 kritisch', tone: 'orange', alert: true },
-    { label: 'Verkauft', value: '64', meta: 'heute', tone: 'cyan', alert: false },
-  ] as const;
+export class HomeComponent implements OnInit {
+  private readonly resourceService = inject(ResourceService);
 
-  protected readonly attentionItems = [
-    { name: 'PK Hoodie Red', quantity: 4, tone: 'pink' },
-    { name: 'Mesh Top Violet', quantity: 6, tone: 'orange' },
-    { name: 'Mini Bag Sun', quantity: 5, tone: 'yellow' },
-  ] as const;
+  protected readonly resources = signal<Resource[]>([]);
+  protected readonly loading = signal(true);
+  protected readonly resourceError = signal('');
+  protected readonly itemTones = ['pink', 'orange', 'yellow'] as const;
+  protected readonly categoryTones = ['pink', 'cyan', 'orange', 'violet'] as const;
 
-  protected readonly trendBars = [
-    { day: 'Mo', value: 24, height: 76, tone: 'pink' },
-    { day: 'Di', value: 38, height: 122, tone: 'violet' },
-    { day: 'Mi', value: 30, height: 96, tone: 'cyan' },
-    { day: 'Do', value: 48, height: 152, tone: 'orange' },
-    { day: 'Fr', value: 42, height: 132, tone: 'pink' },
-    { day: 'Sa', value: 64, height: 202, tone: 'blue' },
-    { day: 'So', value: 56, height: 176, tone: 'violet' },
-  ] as const;
+  protected readonly kpis = computed(() => [
+    {
+      label: 'Artikel',
+      value: this.loading()
+        ? '…'
+        : this.resourceError()
+          ? '—'
+          : this.resources().length.toLocaleString('de-DE'),
+      meta: this.resourceError() ? 'Backend offline' : 'aus Datenbank',
+      tone: 'pink',
+      alert: Boolean(this.resourceError()),
+    },
+    { label: 'Lagerwert', value: '—', meta: 'nicht verfügbar', tone: 'blue', alert: false },
+    { label: 'Niedrig', value: '—', meta: 'nicht verfügbar', tone: 'orange', alert: false },
+    { label: 'Verkauft', value: '—', meta: 'nicht verfügbar', tone: 'cyan', alert: false },
+  ]);
 
-  protected readonly topProducts = [
-    { name: 'Satin Skirt Pink', sales: 19, tone: 'pink' },
-    { name: 'PK Hoodie Red', sales: 28, tone: 'cyan' },
-    { name: 'Mesh Top Violet', sales: 23, tone: 'orange' },
-    { name: 'Logo Cap Blue', sales: 15, tone: 'violet' },
-  ] as const;
+  protected readonly recentResources = computed(() =>
+    [...this.resources()]
+      .sort((first, second) => second.created_at.localeCompare(first.created_at))
+      .slice(0, 3),
+  );
+
+  protected readonly categorySummaries = computed(() => {
+    const counts = new Map<string, number>();
+
+    for (const resource of this.resources()) {
+      counts.set(resource.category, (counts.get(resource.category) ?? 0) + 1);
+    }
+
+    return [...counts.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((first, second) => second.count - first.count || first.name.localeCompare(second.name))
+      .slice(0, 4);
+  });
+
+  ngOnInit(): void {
+    this.resourceService
+      .getAll()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (resources) => this.resources.set(resources),
+        error: () => this.resourceError.set('Die Datenbank konnte nicht geladen werden.'),
+      });
+  }
 }
