@@ -4,51 +4,78 @@
   justify-content: center;
   align-items: center;
   padding: 1.5rem;
-  color: #242124;
-  background: #fffaf4;
-  font-family: 'Trebuchet MS', sans-serif;
+  box-sizing: border-box;
+  color: #291f3b;
+  background: #fff5fc;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
 }
 
 .modal {
   width: min(100%, 46rem);
   padding: clamp(1.5rem, 5vw, 3rem);
-  border: 1px solid rgba(36, 33, 36, 0.25);
+  box-sizing: border-box;
+  border: 1px solid #eee5f2;
+  border-radius: 26px;
   background: #fff;
-  box-shadow: 0.75rem 0.75rem 0 #f6cf55;
+  box-shadow: 0 12px 32px rgba(61, 31, 97, 0.08);
 }
 
 .back-link {
-  color: inherit;
+  color: #ed248f;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
 }
 
 h1 {
   margin-bottom: 0.5rem;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(2rem, 7vw, 3.5rem);
-  font-weight: 400;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 700;
+}
+
+.modal > p:first-of-type {
+  margin-bottom: 1.5rem;
+  color: #7a6b8f;
+  line-height: 1.5;
 }
 
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 1rem;
   display: flex;
   flex-direction: column;
 }
 
 label {
-  margin-bottom: 5px;
-  font-weight: bold;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 input,
 select,
 textarea {
   padding: 0.75rem;
-  border: 1px solid #242124;
+  min-width: 0;
+  border: 1px solid #e2d7eb;
+  border-radius: 12px;
+  color: inherit;
+  background: #fcf8fd;
   font: inherit;
+  transition: border-color 160ms ease;
 }
 
-select {
-  background: #fff;
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: #b894fa;
 }
 
 textarea {
@@ -68,21 +95,35 @@ textarea {
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
+  margin-top: 0.5rem;
 }
 
 button {
-  padding: 0.75rem 1rem;
-  background-color: #ff725e;
-  color: #242124;
-  border: none;
+  padding: 0.75rem 1.25rem;
+  background-color: #ed248f;
+  color: #fff;
+  border: 1px solid transparent;
+  border-radius: 999px;
   cursor: pointer;
-  font-weight: bold;
+  font: inherit;
+  font-weight: 600;
+  transition: background-color 160ms ease;
+}
+
+button:hover:not(:disabled) {
+  background-color: #d91c80;
 }
 
 button.secondary {
-  border: 1px solid #242124;
+  border-color: #e2d7eb;
+  color: #3d1f61;
   background: transparent;
+}
+
+button.secondary:hover:not(:disabled) {
+  background: #f0e5ff;
 }
 
 button:disabled {

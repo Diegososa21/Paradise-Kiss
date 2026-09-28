@@ -16,6 +16,33 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 
 Requisitos: Node.js 26+ y Python 3.12+.
 
+### Windows (PowerShell)
+
+Im Projekt-Hauptordner ausführen. Die Datenbankzugangsdaten müssen bereits
+in `backend/.env` konfiguriert sein.
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r .\backend\requirements.txt
+$env:DJANGO_DEBUG = "true"
+.\.venv\Scripts\python.exe .\backend\manage.py runserver 127.0.0.1:8000
+```
+
+In einem zweiten PowerShell-Terminal im Projekt-Hauptordner:
+
+```powershell
+npm start
+```
+
+Öffne `http://localhost:4200/`. Der API-Proxy ist auch bei `ng serve`
+standardmäßig aktiv. PowerShell unterstützt die Linux-Schreibweise
+`DJANGO_DEBUG=true python ...` nicht; unter Windows liegt die Python-Datei
+der virtuellen Umgebung in `Scripts`, nicht in `bin`.
+
+VS Code lädt über `python.terminal.useEnvFile` die Variablen aus `backend/.env`
+in neue Terminals. Mit `DJANGO_DEBUG=true` in dieser lokalen Datei reicht dort
+`.\.venv\Scripts\python.exe .\backend\manage.py runserver` zum Backend-Start.
+
 ### Backend
 
 ```bash
