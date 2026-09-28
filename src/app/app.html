@@ -1,1 +1,14 @@
-<router-outlet />
+@switch (auth.status()) {
+  @case ('loading') {
+    <main class="session-loading" aria-live="polite">
+      <span>PK</span>
+      <p>Sichere Sitzung wird geprüft…</p>
+    </main>
+  }
+  @case ('authenticated') {
+    <router-outlet />
+  }
+  @default {
+    <app-lock-screen />
+  }
+}

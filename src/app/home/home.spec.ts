@@ -1,7 +1,9 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { Resource } from '../models/resource.model';
+import { AuthService } from '../services/auth.service';
 import { ResourceService } from '../services/resource.service';
 import { HomeComponent } from './home';
 
@@ -49,6 +51,19 @@ describe('HomeComponent', () => {
         {
           provide: ResourceService,
           useValue: { getAll: () => of(resources) },
+        },
+        {
+          provide: AuthService,
+          useValue: {
+            user: signal({
+              id: 1,
+              username: 'diego',
+              display_name: 'Diego Sosa',
+              email: 'diego@example.com',
+              avatar_url: '/profiles/diego.jpeg',
+            }),
+            logout: () => of({ authenticated: false, user: null }),
+          },
         },
       ],
     }).compileComponents();
