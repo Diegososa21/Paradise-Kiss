@@ -1,0 +1,146 @@
+.resource-form-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  color: #291f3b;
+  background: #fff5fc;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+}
+
+.modal {
+  width: min(100%, 46rem);
+  padding: clamp(1.5rem, 5vw, 3rem);
+  box-sizing: border-box;
+  border: 1px solid #eee5f2;
+  border-radius: 26px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(61, 31, 97, 0.08);
+}
+
+.back-link {
+  color: #ed248f;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+h1 {
+  margin-bottom: 0.5rem;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 700;
+}
+
+.modal > p:first-of-type {
+  margin-bottom: 1.5rem;
+  color: #7a6b8f;
+  line-height: 1.5;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+input,
+select,
+textarea {
+  padding: 0.75rem;
+  min-width: 0;
+  border: 1px solid #e2d7eb;
+  border-radius: 12px;
+  color: inherit;
+  background: #fcf8fd;
+  font: inherit;
+  transition: border-color 160ms ease;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: #b894fa;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1rem;
+}
+
+.form-error {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+button {
+  padding: 0.75rem 1.25rem;
+  background-color: #ed248f;
+  color: #fff;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  transition: background-color 160ms ease;
+}
+
+button:hover:not(:disabled) {
+  background-color: #d91c80;
+}
+
+button.secondary {
+  border-color: #e2d7eb;
+  color: #3d1f61;
+  background: transparent;
+}
+
+button.secondary:hover:not(:disabled) {
+  background: #f0e5ff;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.error {
+  color: #a52f20;
+}
+
+.success {
+  color: #17613a;
+}
+
+@media (max-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

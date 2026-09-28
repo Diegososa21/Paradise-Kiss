@@ -1,42 +1,190 @@
-<main class="home-shell">
-  <nav class="topbar" aria-label="Main navigation">
-    <a class="brand" href="/" aria-label="Paradise Kiss home">
-      <span class="brand-mark" aria-hidden="true">PK</span>
-      <span>Paradise Kiss</span>
+<main class="dashboard-shell" data-figma-node="7:184">
+  <aside class="sidebar" data-figma-node="7:185">
+    <a class="brand" routerLink="/" aria-label="Paradise Kiss Inventory Studio">
+      <strong>PARADISE KISS</strong>
+      <span>Inventory Studio</span>
     </a>
-    <button class="menu-button" type="button" aria-label="Open menu">Menu</button>
-  </nav>
 
-  <section class="hero" aria-labelledby="home-title">
-    <p class="eyebrow">Welcome to your new chapter</p>
-    <h1 id="home-title">happines<em>and</em> fullness  .</h1>
-    <p class="intro">
-      A bright little space for inspiration, connection, and the moments that make life feel like yours, just live how you want to.
-    </p>
-    <a class="primary-action" href="#discover">Start exploring <span aria-hidden="true">&#8594;</span></a>
-  </section>
+    <nav class="sidebar-nav" aria-label="Hauptnavigation">
+      <a class="active" routerLink="/" aria-current="page">Home</a>
+      <a routerLink="/resources/new">Artikel</a>
+      <a href="#inventory">Bestand</a>
+      <a href="#sales-trend">Verkäufe</a>
+      <a href="#top-products">Analyse</a>
+    </nav>
+  </aside>
 
-  <section class="discover" id="discover" aria-labelledby="discover-title">
-    <div class="section-heading">
-      <p class="eyebrow">Made for curious hearts</p>
-      <h2 id="discover-title">What are you in the mood for?</h2>
-    </div>
-    <div class="choice-grid">
-      <a class="choice-card choice-card--coral" href="#inspiration">
-        <span class="card-number">01</span>
-        <span class="card-title">Get inspired</span>
-        <span class="card-arrow" aria-hidden="true">&#8599;</span>
-      </a>
-      <a class="choice-card choice-card--yellow" href="#community">
-        <span class="card-number">02</span>
-        <span class="card-title">Meet your people</span>
-        <span class="card-arrow" aria-hidden="true">&#8599;</span>
-      </a>
-      <a class="choice-card choice-card--blue" href="#journal">
-        <span class="card-number">03</span>
-        <span class="card-title">Make something</span>
-        <span class="card-arrow" aria-hidden="true">&#8599;</span>
-      </a>
-    </div>
+  <section class="dashboard-content">
+    <header class="dashboard-header">
+      <div>
+        <h1>Dein Lager heute</h1>
+        <p>Die wichtigsten Informationen zuerst.</p>
+      </div>
+      <div class="header-actions">
+        <a class="add-button" routerLink="/resources/new">+ Neuer Artikel</a>
+        @if (auth.user(); as user) {
+          <div class="user-session">
+            <img [src]="user.avatar_url" [alt]="user.display_name" />
+            <div>
+              <strong>{{ user.display_name }}</strong>
+              <span><i aria-hidden="true"></i> Eingeloggt</span>
+            </div>
+            <button type="button" (click)="logout()" aria-label="Abmelden">Abmelden</button>
+          </div>
+        }
+      </div>
+    </header>
+
+    <section class="kpi-grid" aria-label="Lagerkennzahlen">
+      @for (kpi of kpis(); track kpi.label) {
+        <article class="kpi-card">
+          <span [class]="'color-chip color-chip--' + kpi.tone" aria-hidden="true"></span>
+          <div class="kpi-copy">
+            <span class="kpi-label">{{ kpi.label }}</span>
+            <strong>{{ kpi.value }}</strong>
+            <small [class.alert]="kpi.alert">{{ kpi.meta }}</small>
+          </div>
+        </article>
+      }
+    </section>
+
+    <section class="middle-grid">
+      <article class="attention-card" data-figma-node="7:218">
+        <header>
+          <h2>Neueste Artikel</h2>
+          <p>Direkt aus der gemeinsamen Datenbank</p>
+        </header>
+
+        <div class="attention-list">
+          @if (loading()) {
+            <p class="data-message">Artikel werden geladen…</p>
+          } @else if (resourceError()) {
+            <p class="data-message data-message--error">{{ resourceError() }}</p>
+          } @else if (recentResources().length === 0) {
+            <p class="data-message">Noch keine Artikel vorhanden.</p>
+          }
+
+          @for (item of recentResources(); track item.id; let index = $index) {
+            <div class="attention-row">
+              <span
+                [class]="'status-dot status-dot--' + itemTones[index % itemTones.length]"
+                aria-hidden="true"
+              ></span>
+              <strong>{{ item.name }}</strong>
+              <span>{{ item.category_name }} · {{ item.size }} · {{ item.amount }} Stück</span>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="quick-card" data-figma-node="7:233">
+        <h2>Schnellaktionen</h2>
+        <div class="quick-grid">
+          <a class="quick-action quick-action--cyan" routerLink="/resources/new">Wareneingang</a>
+          <a class="quick-action quick-action--pink" href="#sales-trend">Verkauf erfassen</a>
+          <a class="quick-action quick-action--blue" routerLink="/resources">Inventur</a>
+          <a class="quick-action quick-action--orange" href="#top-products">Report öffnen</a>
+        </div>
+      </article>
+    </section>
+
+    <section class="inventory-card" id="inventory" aria-labelledby="inventory-title">
+      <header>
+        <div>
+          <h2 id="inventory-title">Alle Produkte</h2>
+          <p>Aktueller Bestand aus der gemeinsamen Datenbank</p>
+        </div>
+        <a routerLink="/resources">Detailansicht öffnen</a>
+      </header>
+
+      <div class="inventory-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Produkt</th>
+              <th scope="col">Kategorie</th>
+              <th scope="col">Geschlecht</th>
+              <th scope="col">Größe</th>
+              <th scope="col">Bestand</th>
+              <th scope="col">Hersteller</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (loading()) {
+              <tr class="inventory-state">
+                <td colspan="6">Produkte werden geladen…</td>
+              </tr>
+            } @else if (resourceError()) {
+              <tr class="inventory-state inventory-state--error">
+                <td colspan="6">{{ resourceError() }}</td>
+              </tr>
+            } @else if (inventoryResources().length === 0) {
+              <tr class="inventory-state">
+                <td colspan="6">Noch keine Produkte vorhanden.</td>
+              </tr>
+            }
+
+            @for (item of inventoryResources(); track item.id; let index = $index) {
+              <tr class="inventory-row">
+                <td>
+                  <span
+                    [class]="
+                      'product-mark product-mark--' + categoryTones[index % categoryTones.length]
+                    "
+                    aria-hidden="true"
+                  ></span>
+                  <strong>{{ item.name }}</strong>
+                </td>
+                <td>{{ item.category_name }}</td>
+                <td>{{ item.gender_name }}</td>
+                <td>
+                  <span class="size-pill">{{ item.size }}</span>
+                </td>
+                <td>
+                  <span [class.low-stock]="item.amount <= 5">{{ item.amount }}</span>
+                </td>
+                <td>{{ item.manufacturer_name }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="bottom-grid">
+      <article class="trend-card" id="sales-trend" data-figma-node="7:243">
+        <header>
+          <h2>Verkaufsdaten</h2>
+          <p>Noch nicht im Datenmodell vorhanden</p>
+        </header>
+
+        <div class="chart-empty">
+          <span aria-hidden="true">+</span>
+          <strong>Verkäufe später verbinden</strong>
+          <p>Für dieses Diagramm benötigen wir Datum, Produkt und Verkaufsmenge.</p>
+        </div>
+      </article>
+
+      <article class="products-card" id="top-products" data-figma-node="7:260">
+        <h2>Kategorien</h2>
+        <ol>
+          @for (category of categorySummaries(); track category.name; let rank = $index) {
+            <li>
+              <span [class]="'rank rank--' + categoryTones[rank % categoryTones.length]">{{
+                rank + 1
+              }}</span>
+              <div>
+                <strong>{{ category.name }}</strong>
+                <small>{{ category.count }} Artikel</small>
+              </div>
+            </li>
+          }
+
+          @if (!loading() && categorySummaries().length === 0) {
+            <li class="category-empty">Keine Kategorien verfügbar</li>
+          }
+        </ol>
+      </article>
+    </section>
   </section>
 </main>

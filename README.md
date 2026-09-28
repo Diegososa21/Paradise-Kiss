@@ -4,14 +4,117 @@ Schulprojekt desarrollado con Angular.
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.8.
 
-## Getting started
+## Arquitectura
+
+- `src/`: frontend Angular.
+- `backend/`: API Django REST.
+- Supabase: base de datos PostgreSQL usada por Django.
+- `/api/tables/resources/`: listado y creación de prendas con nombre, descripción,
+  talla, categoría, fabricante, material y género.
+- `/api/auth/`: sesión Django protegida por CSRF para Diego, Nico y Fabian.
+
+## Desarrollo local
+
+Requisitos: Node.js 26+ y Python 3.12+.
+
+### Windows (PowerShell)
+
+Im Projekt-Hauptordner ausführen. Die Datenbankzugangsdaten müssen bereits
+in `backend/.env` konfiguriert sein.
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r .\backend\requirements.txt
+$env:DJANGO_DEBUG = "true"
+.\.venv\Scripts\python.exe .\backend\manage.py runserver 127.0.0.1:8000
+```
+
+In einem zweiten PowerShell-Terminal im Projekt-Hauptordner:
+
+```powershell
+npm start
+```
+
+Öffne `http://localhost:4200/`. Der API-Proxy ist auch bei `ng serve`
+standardmäßig aktiv. PowerShell unterstützt die Linux-Schreibweise
+`DJANGO_DEBUG=true python ...` nicht; unter Windows liegt die Python-Datei
+der virtuellen Umgebung in `Scripts`, nicht in `bin`.
+
+VS Code lädt über `python.terminal.useEnvFile` die Variablen aus `backend/.env`
+in neue Terminals. Mit `DJANGO_DEBUG=true` in dieser lokalen Datei reicht dort
+`.\.venv\Scripts\python.exe .\backend\manage.py runserver` zum Backend-Start.
+
+### Backend
+
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+cp .env.example .env
+python manage.py migrate
+python manage.py check_team_setup
+python manage.py runserver
+```
+
+Antes de ejecutar `migrate`, pide al propietario del proyecto por un canal
+privado estos dos valores y reemplázalos en `backend/.env`:
+
+- `DJANGO_SECRET_KEY`: debe ser el mismo para los tres miembros, porque firma
+  los enlaces de primera contraseña.
+- `DB_PASSWORD`: contraseña del Transaction Pooler de Supabase.
+
+El host, usuario, puerto `6543` y el resto de la configuración compartida ya
+están en `.env.example`. Nunca subas `.env` ni esos dos secretos al repositorio.
+`check_team_setup` confirma que la laptop ve la base compartida, los productos y
+los tres usuarios; el servidor ya no cambia silenciosamente a una SQLite vacía.
+
+### Primera contraseña del equipo
+
+Los usuarios `diego`, `nico` y `fabian` se activan mediante enlaces firmados de
+un solo uso. El administrador genera los enlaces en su terminal y envía cada uno
+por un canal privado:
+
+```bash
+cd backend
+source .venv/bin/activate
+python manage.py activation_links
+```
+
+Cada enlace caduca en 24 horas y deja de funcionar inmediatamente después de
+crear la contraseña. No publiques estos enlaces ni los guardes en Git.
+
+Después de la activación, en otra laptop no se vuelve a usar el enlace. Se abre
+`http://localhost:4200/` y se inicia sesión con `diego`, `nico` o `fabian` y la
+contraseña personal configurada.
+
+### Frontend
 
 ```bash
 npm install
 npm start
 ```
 
-Then open `http://localhost:4200/`.
+Abre `http://localhost:4200/`. El proxy local envía las solicitudes `/api` a
+Django en `http://127.0.0.1:8000`.
+
+## Producción en Vercel
+
+`vercel.json` define dos servicios: Angular en `/` y Django en `/api`. En el
+proyecto de Vercel hay que seleccionar el Framework Preset `Services` y añadir
+estas variables de entorno:
+
+- `DATABASE_URL`
+- `DJANGO_SECRET_KEY`
+- `DJANGO_ALLOWED_HOSTS`
+- `DJANGO_CORS_ALLOWED_ORIGINS`
+- `DJANGO_CSRF_TRUSTED_ORIGINS`
+- `APP_ALLOWED_USERNAMES=diego,nico,fabian`
+- `FRONTEND_URL`
+- `DB_POOL_MODE=transaction`
+- `DB_CONN_MAX_AGE=0`
+
+La contraseña que estuvo escrita en `Sandbox` debe rotarse antes de desplegar.
 
 ## Development server
 

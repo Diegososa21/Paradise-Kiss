@@ -1,10 +1,18 @@
-import { Component } from '@angular/core';
-import { HomeComponent } from './home/home';
+import { Component, inject } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { LockScreenComponent } from './auth/lock-screen';
+import { AuthService } from './services/auth.service';
 
 @Component({
-  imports: [HomeComponent],
   selector: 'app-root',
-  template: '<app-home />',
+  imports: [RouterOutlet, LockScreenComponent],
+  templateUrl: './app.html',
   styleUrl: './app.scss',
 })
-export class App {}
+export class App {
+  protected readonly auth = inject(AuthService);
+
+  constructor() {
+    this.auth.initialize();
+  }
+}

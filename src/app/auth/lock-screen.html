@@ -1,0 +1,97 @@
+<main class="lock-screen">
+  <section class="lock-visual" aria-label="Paradise Kiss Team">
+    <a class="lock-brand" href="/">
+      <strong>PARADISE KISS</strong>
+      <span>Inventory Studio</span>
+    </a>
+
+    <div class="visual-copy">
+      <span class="eyebrow">PRIVATE WORKSPACE</span>
+      <h1>Das Studio gehört dem Team.</h1>
+      <p>Inventar, Produkte und interne Daten bleiben unter euch.</p>
+    </div>
+
+    <div class="team-stack" aria-label="Diego, Nico und Fabian">
+      <img src="/profiles/diego.jpeg" alt="Diego" />
+      <img src="/profiles/nico.jpeg" alt="Nico" />
+      <img src="/profiles/fabian.jpeg" alt="Fabian" />
+      <span>3 Mitglieder</span>
+    </div>
+  </section>
+
+  <section class="lock-panel">
+    <div class="lock-card">
+      <span class="lock-icon" aria-hidden="true">PK</span>
+
+      @if (activationMode) {
+        <p class="kicker">ERSTE ANMELDUNG</p>
+        <h2>Geheimes Passwort erstellen</h2>
+        <p class="intro">Dieser persönliche Link kann nur einmal verwendet werden.</p>
+
+        <form [formGroup]="activationForm" (ngSubmit)="submitActivation()">
+          <label for="new-password">Neues Passwort</label>
+          <input
+            id="new-password"
+            type="password"
+            formControlName="password"
+            autocomplete="new-password"
+          />
+
+          <label for="confirm-password">Passwort bestätigen</label>
+          <input
+            id="confirm-password"
+            type="password"
+            formControlName="password_confirm"
+            autocomplete="new-password"
+          />
+
+          <small>Mindestens 8 Zeichen; keine häufigen oder rein numerischen Passwörter.</small>
+
+          @if (errorMessage()) {
+            <p class="form-error" role="alert">{{ errorMessage() }}</p>
+          }
+
+          <button type="submit" [disabled]="submitting()">
+            {{ submitting() ? 'Wird gespeichert…' : 'Passwort speichern & anmelden' }}
+          </button>
+        </form>
+      } @else {
+        <p class="kicker">WILLKOMMEN ZURÜCK</p>
+        <h2>Studio entsperren</h2>
+        <p class="intro">Melde dich mit deinem persönlichen Teamkonto an.</p>
+
+        <form [formGroup]="loginForm" (ngSubmit)="submitLogin()">
+          <label for="username">Benutzername</label>
+          <input
+            id="username"
+            type="text"
+            formControlName="username"
+            autocomplete="username"
+            autocapitalize="none"
+          />
+
+          <label for="password">Passwort</label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+          />
+
+          @if (errorMessage()) {
+            <p class="form-error" role="alert">{{ errorMessage() }}</p>
+          }
+
+          <button type="submit" [disabled]="submitting()">
+            {{ submitting() ? 'Wird angemeldet…' : 'Anmelden' }}
+          </button>
+        </form>
+
+        <p class="activation-note">
+          Erste Anmeldung? Öffne den persönlichen Aktivierungslink, den dir der Team-Admin geschickt
+          hat.
+        </p>
+      }
+    </div>
+  </section>
+</main>
