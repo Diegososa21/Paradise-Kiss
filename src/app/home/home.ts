@@ -55,6 +55,10 @@ export class HomeComponent implements OnInit {
       .slice(0, 3),
   );
 
+  protected readonly inventoryResources = computed(() =>
+    [...this.resources()].sort((first, second) => first.name.localeCompare(second.name)),
+  );
+
   protected readonly categorySummaries = computed(() => {
     const counts = new Map<string, number>();
 

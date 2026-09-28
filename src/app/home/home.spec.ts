@@ -66,12 +66,16 @@ describe('HomeComponent', () => {
     expect(content).toContain('5 oder weniger');
   });
 
-  it('shows recent resources and their categories', () => {
+  it('shows all resources in the dashboard inventory', () => {
     const content = fixture.nativeElement.textContent;
+    const rows = fixture.nativeElement.querySelectorAll('.inventory-row');
 
+    expect(rows).toHaveLength(2);
     expect(content).toContain('Violet Top');
     expect(content).toContain('White Tee');
     expect(content).toContain('Tops');
     expect(content).toContain('Tees');
+    expect(content).toContain('Paradise Kiss');
+    expect(content).toContain('Unisex');
   });
 });

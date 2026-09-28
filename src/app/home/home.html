@@ -8,7 +8,7 @@
     <nav class="sidebar-nav" aria-label="Hauptnavigation">
       <a class="active" routerLink="/" aria-current="page">Home</a>
       <a routerLink="/resources/new">Artikel</a>
-      <a routerLink="/resources">Bestand</a>
+      <a href="#inventory">Bestand</a>
       <a href="#sales-trend">Verkäufe</a>
       <a href="#top-products">Analyse</a>
     </nav>
@@ -74,6 +74,69 @@
           <a class="quick-action quick-action--orange" href="#top-products">Report öffnen</a>
         </div>
       </article>
+    </section>
+
+    <section class="inventory-card" id="inventory" aria-labelledby="inventory-title">
+      <header>
+        <div>
+          <h2 id="inventory-title">Alle Produkte</h2>
+          <p>Aktueller Bestand aus der gemeinsamen Datenbank</p>
+        </div>
+        <a routerLink="/resources">Detailansicht öffnen</a>
+      </header>
+
+      <div class="inventory-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Produkt</th>
+              <th scope="col">Kategorie</th>
+              <th scope="col">Geschlecht</th>
+              <th scope="col">Größe</th>
+              <th scope="col">Bestand</th>
+              <th scope="col">Hersteller</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (loading()) {
+              <tr class="inventory-state">
+                <td colspan="6">Produkte werden geladen…</td>
+              </tr>
+            } @else if (resourceError()) {
+              <tr class="inventory-state inventory-state--error">
+                <td colspan="6">{{ resourceError() }}</td>
+              </tr>
+            } @else if (inventoryResources().length === 0) {
+              <tr class="inventory-state">
+                <td colspan="6">Noch keine Produkte vorhanden.</td>
+              </tr>
+            }
+
+            @for (item of inventoryResources(); track item.id; let index = $index) {
+              <tr class="inventory-row">
+                <td>
+                  <span
+                    [class]="
+                      'product-mark product-mark--' + categoryTones[index % categoryTones.length]
+                    "
+                    aria-hidden="true"
+                  ></span>
+                  <strong>{{ item.name }}</strong>
+                </td>
+                <td>{{ item.category_name }}</td>
+                <td>{{ item.gender_name }}</td>
+                <td>
+                  <span class="size-pill">{{ item.size }}</span>
+                </td>
+                <td>
+                  <span [class.low-stock]="item.amount <= 5">{{ item.amount }}</span>
+                </td>
+                <td>{{ item.manufacturer_name }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <section class="bottom-grid">

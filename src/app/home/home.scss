@@ -241,11 +241,135 @@ h2,
 
 .attention-card,
 .quick-card,
+.inventory-card,
 .trend-card,
 .products-card {
   overflow: hidden;
   border-radius: 26px;
   box-sizing: border-box;
+}
+
+.inventory-card {
+  padding: 22px;
+  background: #fff;
+}
+
+.inventory-card > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding-inline: 4px;
+}
+
+.inventory-card header p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.inventory-card header a {
+  color: var(--pink-dark);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.inventory-card header a:hover,
+.inventory-card header a:focus-visible {
+  text-decoration: underline;
+}
+
+.inventory-table-wrap {
+  margin-top: 20px;
+  overflow-x: auto;
+  border: 1px solid #eee5f2;
+  border-radius: 18px;
+}
+
+.inventory-card table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.inventory-card th,
+.inventory-card td {
+  padding: 13px 16px;
+  border-bottom: 1px solid #f0e8f4;
+  font-size: 12px;
+}
+
+.inventory-card th {
+  color: var(--muted);
+  background: #fcf8fd;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.inventory-card tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.inventory-card tbody tr:not(.inventory-state):hover {
+  background: #fff9fd;
+}
+
+.inventory-card td:first-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.product-mark {
+  width: 10px;
+  height: 26px;
+  flex: 0 0 10px;
+  border-radius: 999px;
+}
+
+.product-mark--pink {
+  background: var(--pink);
+}
+
+.product-mark--cyan {
+  background: var(--cyan);
+}
+
+.product-mark--orange {
+  background: var(--orange);
+}
+
+.product-mark--violet {
+  background: var(--violet);
+}
+
+.size-pill {
+  display: inline-grid;
+  min-width: 30px;
+  min-height: 26px;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--purple);
+  background: #f0e5ff;
+  font-weight: 700;
+}
+
+.low-stock {
+  color: var(--pink-dark);
+  font-weight: 800;
+}
+
+.inventory-state td {
+  height: 110px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.inventory-state--error td {
+  color: var(--pink-dark);
 }
 
 .attention-card {
@@ -542,6 +666,10 @@ h2 {
 
   .dashboard-header {
     align-items: stretch;
+    flex-direction: column;
+  }
+
+  .inventory-card > header {
     flex-direction: column;
   }
 
