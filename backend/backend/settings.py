@@ -70,7 +70,21 @@ TEMPLATES = [
 WSGI_APPLICATION = 'backend.wsgi.application'
 
 database_url = os.getenv('DATABASE_URL')
-if database_url:
+database_name = os.getenv('DB_NAME') or os.getenv('DB_Name')
+database_user = os.getenv('DB_USER')
+database_password = os.getenv('DB_PASSWORD') or os.getenv('DB_Password')
+database_host = os.getenv('DB_HOST') or os.getenv('DB_Host')
+database_port = os.getenv('DB_PORT') or os.getenv('DB_Port') or '5432'
+use_sqlite = os.getenv('DJANGO_USE_SQLITE', 'false').lower() == 'true'
+
+if use_sqlite:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+elif database_url:
     DATABASES = {
         'default': dj_database_url.parse(
             database_url,
@@ -78,6 +92,22 @@ if database_url:
             conn_health_checks=True,
             ssl_require=True,
         )
+    }
+elif all([database_name, database_user, database_password, database_host]):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': database_name,
+            'USER': database_user,
+            'PASSWORD': database_password,
+            'HOST': database_host,
+            'PORT': database_port,
+            'CONN_MAX_AGE': 600,
+            'CONN_HEALTH_CHECKS': True,
+            'OPTIONS': {
+                'sslmode': 'require',
+            },
+        }
     }
 elif DEBUG:
     DATABASES = {
