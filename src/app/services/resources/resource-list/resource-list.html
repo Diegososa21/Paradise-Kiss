@@ -21,13 +21,32 @@
         <p>{{ resource.desc }}</p>
       </div>
       <dl>
-        <div><dt>Größe</dt><dd>{{ resource.size }}</dd></div>
-        <div><dt>Kategorie</dt><dd>{{ resource.category }}</dd></div>
-        <div><dt>Hersteller</dt><dd>{{ resource.manufacurer }}</dd></div>
-        <div><dt>Material</dt><dd>{{ resource.material }}</dd></div>
-        <div><dt>Geschlecht</dt><dd>{{ resource.gender }}</dd></div>
+        <div>
+          <dt>Größe</dt>
+          <dd>{{ resource.size }}</dd>
+        </div>
+        <div>
+          <dt>Menge</dt>
+          <dd>{{ resource.amount }}</dd>
+        </div>
+        <div>
+          <dt>Kategorie</dt>
+          <dd>{{ resource.category_name }}</dd>
+        </div>
+        <div>
+          <dt>Hersteller</dt>
+          <dd>{{ resource.manufacturer_name }}</dd>
+        </div>
+        <div>
+          <dt>Material</dt>
+          <dd>{{ resource.material }}</dd>
+        </div>
+        <div>
+          <dt>Geschlecht</dt>
+          <dd>{{ resource.gender_name }}</dd>
+        </div>
       </dl>
-      <small>{{ resource.created_at | date:'dd.MM.yyyy HH:mm' }}</small>
+      <small>{{ resource.created_at | date: 'dd.MM.yyyy HH:mm' }}</small>
     </div>
   }
 </div>

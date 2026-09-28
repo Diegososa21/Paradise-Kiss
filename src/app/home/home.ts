@@ -33,7 +33,19 @@ export class HomeComponent implements OnInit {
       alert: Boolean(this.resourceError()),
     },
     { label: 'Lagerwert', value: '—', meta: 'nicht verfügbar', tone: 'blue', alert: false },
-    { label: 'Niedrig', value: '—', meta: 'nicht verfügbar', tone: 'orange', alert: false },
+    {
+      label: 'Niedrig',
+      value: this.loading()
+        ? '…'
+        : this.resourceError()
+          ? '—'
+          : this.resources()
+              .filter((resource) => resource.amount <= 5)
+              .length.toLocaleString('de-DE'),
+      meta: this.resourceError() ? 'Backend offline' : '5 oder weniger',
+      tone: 'orange',
+      alert: !this.resourceError() && this.resources().some((resource) => resource.amount <= 5),
+    },
     { label: 'Verkauft', value: '—', meta: 'nicht verfügbar', tone: 'cyan', alert: false },
   ]);
 
@@ -47,7 +59,7 @@ export class HomeComponent implements OnInit {
     const counts = new Map<string, number>();
 
     for (const resource of this.resources()) {
-      counts.set(resource.category, (counts.get(resource.category) ?? 0) + 1);
+      counts.set(resource.category_name, (counts.get(resource.category_name) ?? 0) + 1);
     }
 
     return [...counts.entries()]

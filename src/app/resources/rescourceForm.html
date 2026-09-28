@@ -7,7 +7,7 @@
     <form [formGroup]="form" (ngSubmit)="submit()">
       <div class="form-group">
         <label for="name">Name:</label>
-        <input type="text" id="name" formControlName="name" autocomplete="name">
+        <input type="text" id="name" formControlName="name" autocomplete="name" />
         @if (form.controls.name.touched && form.controls.name.invalid) {
           <small class="error">Bitte einen Namen eingeben.</small>
         }
@@ -23,40 +23,73 @@
 
       <div class="form-grid">
         <div class="form-group">
+          <label for="amount">Menge:</label>
+          <input type="number" id="amount" formControlName="amount" min="0" />
+        </div>
+
+        <div class="form-group">
           <label for="size">Größe:</label>
-          <input type="text" id="size" formControlName="size">
+          <input type="text" id="size" formControlName="size" />
         </div>
 
         <div class="form-group">
           <label for="category">Kategorie:</label>
-          <input type="text" id="category" formControlName="category">
+          <select id="category" formControlName="category">
+            <option [ngValue]="0">Bitte auswählen</option>
+            @for (category of categories; track category.id) {
+              <option [ngValue]="category.id">{{ category.name }}</option>
+            }
+          </select>
         </div>
 
         <div class="form-group">
-          <label for="manufacurer">Hersteller:</label>
-          <input type="text" id="manufacurer" formControlName="manufacurer">
+          <label for="manufacturer">Hersteller:</label>
+          <select id="manufacturer" formControlName="manufacturer">
+            <option [ngValue]="0">Bitte auswählen</option>
+            @for (manufacturer of manufacturers; track manufacturer.id) {
+              <option [ngValue]="manufacturer.id">{{ manufacturer.name }}</option>
+            }
+          </select>
         </div>
 
         <div class="form-group">
           <label for="material">Material:</label>
-          <input type="text" id="material" formControlName="material">
+          <input type="text" id="material" formControlName="material" />
         </div>
 
         <div class="form-group">
           <label for="gender">Geschlecht:</label>
-          <input type="text" id="gender" formControlName="gender">
+          <select id="gender" formControlName="gender">
+            <option [ngValue]="0">Bitte auswählen</option>
+            @for (gender of genders; track gender.id) {
+              <option [ngValue]="gender.id">{{ gender.name }}</option>
+            }
+          </select>
         </div>
       </div>
+
+      @if (optionsLoading) {
+        <p>Auswahldaten werden geladen…</p>
+      }
+      @if (optionsError) {
+        <p class="error" role="alert">{{ optionsError }}</p>
+      }
 
       @if (form.touched && form.invalid) {
         <small class="error form-error">Bitte alle Felder vollständig ausfüllen.</small>
       }
 
       <div class="actions">
-        <button type="submit" [disabled]="submitting">
+        <button type="submit" [disabled]="submitting || optionsLoading || !!optionsError">
           {{ submitting ? 'Speichert…' : 'Absenden' }}
         </button>
-        <button type="button" class="secondary" (click)="form.reset()">Abbrechen</button>
+        <button
+          type="button"
+          class="secondary"
+          (click)="form.reset({ amount: 0, category: 0, manufacturer: 0, gender: 0 })"
+        >
+          Abbrechen
+        </button>
       </div>
     </form>
 

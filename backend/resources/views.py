@@ -7,21 +7,21 @@ from .serializers import (
 )
 
 class ResourceViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
-    queryset = resources.objects.select_related("manufacturer", "category", "gender")
+    queryset = resources.objects.select_related("manufacturer", "category", "gender").order_by("-created_at")
     serializer_class = ResourceSerializer
     permission_classes = [AllowAny]
 
 class ManufacturerViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
-    queryset = Manufacturer.objects.all()
+    queryset = Manufacturer.objects.order_by("name")
     serializer_class = ManufacturerSerializer
     permission_classes = [AllowAny]
 
 class CategoryViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
-    queryset = Category.objects.all()
+    queryset = Category.objects.order_by("name")
     serializer_class = CategorySerializer
     permission_classes = [AllowAny]
 
 class GenderViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
-    queryset = Gender.objects.all()
+    queryset = Gender.objects.order_by("name")
     serializer_class = GenderSerializer
     permission_classes = [AllowAny]
