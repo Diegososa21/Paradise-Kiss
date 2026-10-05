@@ -376,3 +376,50 @@ class ResourceApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(mail.outbox), 2)
         self.assertTrue(all('Artikel angelegt' in message.subject for message in mail.outbox))
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        INVENTORY_EMAIL_NOTIFICATIONS_ENABLED=True,
+        DEFAULT_FROM_EMAIL='lager@example.com',
+    )
+    def test_notifies_every_registered_active_email(self):
+        get_user_model().objects.create_user(
+            username='fabian',
+            email='fabian@example.com',
+            password='A-secure-test-password-2026!',
+        )
+        get_user_model().objects.create_user(
+            username='inactive',
+            email='inactive@example.com',
+            password='A-secure-test-password-2026!',
+            is_active=False,
+        )
+        get_user_model().objects.create_user(username='no.email', email='')
+        resource = resources.objects.create(**self.resource_data)
+        mail.outbox.clear()
+
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(
+                f'/tables/resources/{resource.id}/sell/',
+                {'quantity': 1},
+                format='json',
+            )
+
+        self.assertEqual(
+            sorted(message.to[0] for message in mail.outbox),
+            ['diego@example.com', 'fabian@example.com', 'nico@example.com'],
+        )
+        self.assertTrue(all(message.from_email == 'lager@example.com' for message in mail.outbox))
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        INVENTORY_EMAIL_NOTIFICATIONS_ENABLED=False,
+    )
+    def test_skips_emails_when_notifications_are_disabled(self):
+        resource = resources.objects.create(**self.resource_data)
+        mail.outbox.clear()
+
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.delete(f'/tables/resources/{resource.id}/')
+
+        self.assertEqual(len(mail.outbox), 0)

@@ -114,13 +114,29 @@ actualizarán después de registrar ventas reales desde la aplicación.
 
 ### Notificaciones de inventario por correo
 
-Las ventas, reposiciones, modificaciones del lugar/stock mínimo y eliminaciones
-generan una notificación para cada usuario activo del grupo Django `team` que
-tenga un correo en Supabase. Las direcciones no están escritas en el código.
+Cada venta, reposición, modificación, eliminación o artículo nuevo genera una
+notificación para cada usuario activo que tenga un correo registrado en la base
+de Supabase (tabla `auth_user`). Las direcciones no están escritas en el código:
+para agregar o quitar destinatarios basta con cambiar el correo del usuario.
 
 En desarrollo, si no se configura SMTP, Django imprime los correos en la
-terminal del backend. Para entrega real configura un proveedor SMTP en
-`backend/.env` y en las variables del despliegue. Por ejemplo, con Resend:
+terminal del backend. Para entrega real configura el SMTP en `backend/.env` y
+en las variables del despliegue. Con Gmail solo hacen falta la cuenta y una
+contraseña de aplicación:
+
+```dotenv
+EMAIL_HOST_USER=tu.cuenta@gmail.com
+EMAIL_HOST_PASSWORD=CONTRASEÑA_DE_APLICACION
+```
+
+Para comprobar la configuración y ver a quién se enviarán los avisos:
+
+```bash
+python manage.py check_email_setup          # muestra backend, remitente y destinatarios
+python manage.py check_email_setup --send   # envía un correo de prueba a todos
+```
+
+También se puede usar otro proveedor SMTP, por ejemplo Resend:
 
 ```dotenv
 DJANGO_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend

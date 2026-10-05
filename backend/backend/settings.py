@@ -186,7 +186,12 @@ SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_SECURE_HSTS_SECONDS', '0'))
 
-email_host = os.getenv('EMAIL_HOST', '')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+# Gmail only needs EMAIL_HOST_USER and an app password in EMAIL_HOST_PASSWORD.
+email_host = os.getenv('EMAIL_HOST', '') or (
+    'smtp.gmail.com' if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD else ''
+)
 EMAIL_BACKEND = os.getenv(
     'DJANGO_EMAIL_BACKEND',
     (
@@ -197,12 +202,14 @@ EMAIL_BACKEND = os.getenv(
 )
 EMAIL_HOST = email_host
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'true').lower() == 'true'
 EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'false').lower() == 'true'
 EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Paradise Kiss <no-reply@localhost>')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL') or (
+    f'Paradise Kiss <{EMAIL_HOST_USER}>'
+    if '@' in EMAIL_HOST_USER
+    else 'Paradise Kiss <no-reply@localhost>'
+)
 INVENTORY_EMAIL_NOTIFICATIONS_ENABLED = (
     os.getenv('INVENTORY_EMAIL_NOTIFICATIONS_ENABLED', 'true').lower() == 'true'
 )

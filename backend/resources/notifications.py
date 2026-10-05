@@ -19,15 +19,22 @@ EVENT_LABELS = {
 }
 
 
-def team_recipient_emails() -> list[str]:
-    return list(
+def registered_recipient_emails() -> list[str]:
+    """Email addresses of every active user registered in the Supabase database."""
+    emails = (
         get_user_model()
-        .objects.filter(is_active=True, groups__name='team')
+        .objects.filter(is_active=True)
+        .exclude(email__isnull=True)
         .exclude(email='')
         .order_by('email')
         .values_list('email', flat=True)
-        .distinct()
     )
+    unique_emails = {}
+    for email in emails:
+        email = email.strip()
+        if '@' in email:
+            unique_emails.setdefault(email.lower(), email)
+    return list(unique_emails.values())
 
 
 def schedule_inventory_notification(
@@ -61,9 +68,9 @@ def _send_inventory_notification(
     actor_name: str,
     detail_lines: tuple[str, ...],
 ) -> None:
-    recipients = team_recipient_emails()
+    recipients = registered_recipient_emails()
     if not recipients:
-        logger.warning('Inventory email skipped because the team has no active email recipients.')
+        logger.warning('Inventory email skipped because no active user has a registered email.')
         return
 
     occurred_at = timezone.localtime().strftime('%d.%m.%Y %H:%M %Z')
@@ -85,23 +92,33 @@ def _send_inventory_notification(
     subject = f'{settings.INVENTORY_EMAIL_SUBJECT_PREFIX} {event_label}: {resource_name}'
 
     try:
-        connection = get_connection(fail_silently=True)
-        messages = [
-            EmailMessage(
+        connection = get_connection()
+        connection.open()
+    except Exception:
+        logger.exception('Could not connect to the email server for inventory notifications.')
+        return
+
+    failed_recipients = []
+    try:
+        for recipient in recipients:
+            message = EmailMessage(
                 subject=subject,
                 body=body,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=[recipient],
                 connection=connection,
             )
-            for recipient in recipients
-        ]
-        sent_count = connection.send_messages(messages)
-        if sent_count != len(messages):
-            logger.warning(
-                'Only %s of %s inventory notification emails were accepted by the backend.',
-                sent_count,
-                len(messages),
-            )
-    except Exception:
-        logger.exception('Inventory notification email delivery failed.')
+            try:
+                message.send()
+            except Exception:
+                logger.exception('Inventory notification email to %s failed.', recipient)
+                failed_recipients.append(recipient)
+    finally:
+        connection.close()
+
+    if failed_recipients:
+        logger.warning(
+            'Inventory notification was not delivered to %s of %s recipients.',
+            len(failed_recipients),
+            len(recipients),
+        )
