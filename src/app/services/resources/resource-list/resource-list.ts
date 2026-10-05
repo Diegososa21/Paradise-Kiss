@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize } from 'rxjs';
 import { InventorySale, Resource } from '../../../models/resource.model';
 import { ResourceService } from '../../resource.service';
 
@@ -23,7 +23,9 @@ export class ResourceList implements OnInit {
   rowErrors: Record<number, string> = {};
   busyResourceId: number | null = null;
   loading = true;
+  salesLoading = true;
   error = '';
+  salesError = '';
 
   constructor(private resourceService: ResourceService) {}
 
@@ -32,22 +34,31 @@ export class ResourceList implements OnInit {
   }
 
   ngOnInit(): void {
-    forkJoin({
-      resources: this.resourceService.getAll(),
-      sales: this.resourceService.getInventorySales(),
-    })
+    this.resourceService
+      .getAll()
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
-        next: ({ resources, sales }) => {
+        next: (resources) => {
           this.resources = resources;
-          this.recentSales = sales.slice(0, 8);
-          this.totalSalesCount = sales.length;
           for (const resource of resources) {
             this.saleQuantities[resource.id] = 1;
           }
         },
         error: () => {
           this.error = 'Fehler beim Laden der Daten';
+        },
+      });
+
+    this.resourceService
+      .getInventorySales()
+      .pipe(finalize(() => (this.salesLoading = false)))
+      .subscribe({
+        next: (sales) => {
+          this.recentSales = sales.slice(0, 8);
+          this.totalSalesCount = sales.length;
+        },
+        error: () => {
+          this.salesError = 'Die Verkaufshistorie konnte nicht geladen werden.';
         },
       });
   }

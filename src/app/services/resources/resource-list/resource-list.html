@@ -25,7 +25,7 @@
       </article>
       <article>
         <span>Registrierte Verkäufe</span>
-        <strong>{{ totalSalesCount }}</strong>
+        <strong>{{ salesLoading ? '…' : totalSalesCount }}</strong>
         <small>gespeicherte Buchungen</small>
       </article>
     </section>
@@ -133,7 +133,11 @@
           <h2 id="recent-sales-title">Letzte Verkäufe</h2>
         </header>
 
-        @if (recentSales.length === 0) {
+        @if (salesLoading) {
+          <p class="empty-state">Verkaufshistorie wird geladen…</p>
+        } @else if (salesError) {
+          <p class="empty-state empty-state--error" role="alert">{{ salesError }}</p>
+        } @else if (recentSales.length === 0) {
           <p class="empty-state">Noch keine Verkäufe registriert.</p>
         }
 

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { InventorySale, Resource } from '../../../models/resource.model';
 import { ResourceService } from '../../resource.service';
 import { ResourceList } from './resource-list';
@@ -75,6 +75,22 @@ describe('ResourceList', () => {
     expect(component.resources).toHaveLength(1);
     expect(component.totalStock).toBe(300);
     expect(component.saleQuantities[resource.id]).toBe(1);
+    expect(fixture.nativeElement.textContent).toContain('Classic Shirt');
+  });
+
+  it('keeps inventory visible when the sales history request fails', async () => {
+    fixture.destroy();
+    resourceService.getInventorySales.mockReturnValue(
+      throwError(() => new Error('sales unavailable')),
+    );
+    fixture = TestBed.createComponent(ResourceList);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.resources).toHaveLength(1);
+    expect(component.error).toBe('');
+    expect(component.salesError).toContain('Verkaufshistorie');
     expect(fixture.nativeElement.textContent).toContain('Classic Shirt');
   });
 

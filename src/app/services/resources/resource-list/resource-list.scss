@@ -401,6 +401,11 @@ button:disabled {
   color: #d8c8e5;
 }
 
+.sales-panel .empty-state--error {
+  border-color: rgba(255, 146, 200, 0.55);
+  color: #ffb3d8;
+}
+
 @media (max-width: 980px) {
   .content-grid {
     grid-template-columns: 1fr;
