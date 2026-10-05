@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import resources, Manufacturer, Gender, Category
+from .models import Category, Gender, Manufacturer, SalesData, resources
 
 
 
@@ -50,4 +50,20 @@ class GenderSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'name',
+        ]
+
+
+class SalesDataSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source='category.name', read_only=True)
+
+    class Meta:
+        model = SalesData
+        fields = [
+            'id',
+            'year',
+            'quarter',
+            'category',
+            'category_name',
+            'units_sold',
+            'revenue',
         ]

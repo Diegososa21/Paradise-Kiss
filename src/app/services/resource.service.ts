@@ -1,7 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Category, CreateResource, Gender, Manufacturer, Resource } from '../models/resource.model';
+import {
+  Category,
+  CreateResource,
+  Gender,
+  Manufacturer,
+  Resource,
+  SalesData,
+} from '../models/resource.model';
 
 @Injectable({
   providedIn: 'root',
@@ -29,5 +36,9 @@ export class ResourceService {
 
   getGenders(): Observable<Gender[]> {
     return this.http.get<Gender[]>(`${this.baseUrl}/genders/`);
+  }
+
+  getSalesData(): Observable<SalesData[]> {
+    return this.http.get<SalesData[]>(`${this.baseUrl}/sales/`);
   }
 }

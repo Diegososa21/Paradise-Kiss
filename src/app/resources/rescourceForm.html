@@ -1,103 +1,201 @@
-<main class="resource-form-page">
-  <section class="modal" aria-labelledby="resource-form-title">
-    <a class="back-link" routerLink="/">&#8592; Zurück</a>
-    <h1 id="resource-form-title">Artikel hinzufügen</h1>
-    <p>Speichere einen neuen Eintrag in der gemeinsamen Datenbank.</p>
+<main class="resource-shell">
+  <aside class="sidebar">
+    <a class="brand" routerLink="/" aria-label="Paradise Kiss Inventory Studio">
+      <strong>PARADISE KISS</strong>
+      <span>Inventory Studio</span>
+    </a>
 
-    <form [formGroup]="form" (ngSubmit)="submit()">
-      <div class="form-group">
-        <label for="name">Name:</label>
-        <input type="text" id="name" formControlName="name" autocomplete="name" />
-        @if (form.controls.name.touched && form.controls.name.invalid) {
-          <small class="error">Bitte einen Namen eingeben.</small>
-        }
+    <nav class="sidebar-nav" aria-label="Hauptnavigation">
+      <a routerLink="/">Home</a>
+      <a class="active" routerLink="/resources/new" aria-current="page">Artikel</a>
+      <a routerLink="/" fragment="inventory">Bestand</a>
+      <a routerLink="/" fragment="sales-trend">Verkäufe</a>
+      <a routerLink="/" fragment="top-products">Analyse</a>
+    </nav>
+  </aside>
+
+  <section class="resource-content">
+    <header class="page-header">
+      <div>
+        <a class="back-link" routerLink="/">← Zurück zum Dashboard</a>
+        <h1>Neuen Artikel anlegen</h1>
+        <p>Ergänze den gemeinsamen Bestand mit allen wichtigen Produktdetails.</p>
       </div>
 
-      <div class="form-group">
-        <label for="desc">Beschreibung:</label>
-        <textarea id="desc" formControlName="desc" rows="3"></textarea>
-        @if (form.controls.desc.touched && form.controls.desc.invalid) {
-          <small class="error">Bitte eine Beschreibung eingeben.</small>
-        }
-      </div>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="amount">Menge:</label>
-          <input type="number" id="amount" formControlName="amount" min="0" />
+      @if (auth.user(); as user) {
+        <div class="user-session">
+          <img [src]="user.avatar_url" [alt]="user.display_name" />
+          <div>
+            <strong>{{ user.display_name }}</strong>
+            <span><i aria-hidden="true"></i> Eingeloggt</span>
+          </div>
+          <button type="button" (click)="logout()" aria-label="Abmelden">Abmelden</button>
         </div>
-
-        <div class="form-group">
-          <label for="size">Größe:</label>
-          <input type="text" id="size" formControlName="size" />
-        </div>
-
-        <div class="form-group">
-          <label for="category">Kategorie:</label>
-          <select id="category" formControlName="category">
-            <option [ngValue]="0">Bitte auswählen</option>
-            @for (category of categories; track category.id) {
-              <option [ngValue]="category.id">{{ category.name }}</option>
-            }
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="manufacturer">Hersteller:</label>
-          <select id="manufacturer" formControlName="manufacturer">
-            <option [ngValue]="0">Bitte auswählen</option>
-            @for (manufacturer of manufacturers; track manufacturer.id) {
-              <option [ngValue]="manufacturer.id">{{ manufacturer.name }}</option>
-            }
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="material">Material:</label>
-          <input type="text" id="material" formControlName="material" />
-        </div>
-
-        <div class="form-group">
-          <label for="gender">Geschlecht:</label>
-          <select id="gender" formControlName="gender">
-            <option [ngValue]="0">Bitte auswählen</option>
-            @for (gender of genders; track gender.id) {
-              <option [ngValue]="gender.id">{{ gender.name }}</option>
-            }
-          </select>
-        </div>
-      </div>
-
-      @if (optionsLoading) {
-        <p>Auswahldaten werden geladen…</p>
       }
-      @if (optionsError) {
-        <p class="error" role="alert">{{ optionsError }}</p>
-      }
+    </header>
 
-      @if (form.touched && form.invalid) {
-        <small class="error form-error">Bitte alle Felder vollständig ausfüllen.</small>
-      }
+    <div class="form-layout">
+      <section class="form-card" aria-labelledby="resource-form-title">
+        <header class="form-card-header">
+          <span class="form-icon" aria-hidden="true">+</span>
+          <div>
+            <span class="eyebrow">Wareneingang</span>
+            <h2 id="resource-form-title">Produktinformationen</h2>
+            <p>Alle Felder werden für die gemeinsame Datenbank benötigt.</p>
+          </div>
+        </header>
 
-      <div class="actions">
-        <button type="submit" [disabled]="submitting || optionsLoading || !!optionsError">
-          {{ submitting ? 'Speichert…' : 'Absenden' }}
-        </button>
-        <button
-          type="button"
-          class="secondary"
-          (click)="form.reset({ amount: 0, category: 0, manufacturer: 0, gender: 0 })"
-        >
-          Abbrechen
-        </button>
-      </div>
-    </form>
+        <form [formGroup]="form" (ngSubmit)="submit()">
+          <div class="form-group form-group--wide">
+            <label for="name">Artikelname</label>
+            <input
+              type="text"
+              id="name"
+              formControlName="name"
+              autocomplete="off"
+              placeholder="z. B. Oversize Denim Jacket"
+            />
+            @if (form.controls.name.touched && form.controls.name.invalid) {
+              <small class="field-error">Bitte einen Namen eingeben.</small>
+            }
+          </div>
 
-    @if (successMessage) {
-      <p class="success" role="status">{{ successMessage }}</p>
-    }
-    @if (errorMessage) {
-      <p class="error" role="alert">{{ errorMessage }}</p>
-    }
+          <div class="form-group form-group--wide">
+            <label for="desc">Beschreibung</label>
+            <textarea
+              id="desc"
+              formControlName="desc"
+              rows="4"
+              placeholder="Kurze Beschreibung des Artikels"
+            ></textarea>
+            @if (form.controls.desc.touched && form.controls.desc.invalid) {
+              <small class="field-error">Bitte eine Beschreibung eingeben.</small>
+            }
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="amount">Menge</label>
+              <input type="number" id="amount" formControlName="amount" min="0" />
+            </div>
+
+            <div class="form-group">
+              <label for="size">Größe</label>
+              <input type="text" id="size" formControlName="size" placeholder="S, M, L …" />
+            </div>
+
+            <div class="form-group">
+              <label for="category">Kategorie</label>
+              <select id="category" formControlName="category">
+                <option [ngValue]="0">Bitte auswählen</option>
+                @for (category of categories; track category.id) {
+                  <option [ngValue]="category.id">{{ category.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="manufacturer">Hersteller</label>
+              <select id="manufacturer" formControlName="manufacturer">
+                <option [ngValue]="0">Bitte auswählen</option>
+                @for (manufacturer of manufacturers; track manufacturer.id) {
+                  <option [ngValue]="manufacturer.id">{{ manufacturer.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="material">Material</label>
+              <input
+                type="text"
+                id="material"
+                formControlName="material"
+                placeholder="z. B. Denim"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="gender">Geschlecht</label>
+              <select id="gender" formControlName="gender">
+                <option [ngValue]="0">Bitte auswählen</option>
+                @for (gender of genders; track gender.id) {
+                  <option [ngValue]="gender.id">{{ gender.name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          @if (optionsLoading) {
+            <p class="form-notice" role="status">Auswahldaten werden geladen…</p>
+          }
+          @if (optionsError) {
+            <p class="form-notice form-notice--error" role="alert">{{ optionsError }}</p>
+          }
+
+          @if (form.touched && form.invalid) {
+            <p class="form-notice form-notice--error" role="alert">
+              Bitte alle Felder vollständig ausfüllen.
+            </p>
+          }
+
+          @if (successMessage) {
+            <p class="form-notice form-notice--success" role="status">{{ successMessage }}</p>
+          }
+          @if (errorMessage) {
+            <p class="form-notice form-notice--error" role="alert">{{ errorMessage }}</p>
+          }
+
+          <div class="actions">
+            <button
+              type="submit"
+              class="primary-action"
+              [disabled]="submitting || optionsLoading || !!optionsError"
+            >
+              {{ submitting ? 'Wird gespeichert…' : 'Artikel speichern' }}
+            </button>
+            <button
+              type="button"
+              class="secondary-action"
+              (click)="resetForm()"
+              [disabled]="submitting"
+            >
+              Zurücksetzen
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <aside class="form-aside" aria-label="Hinweise zum neuen Artikel">
+        <span class="aside-label">Paradise Kiss</span>
+        <h2>Ein guter Eintrag hält das Lager übersichtlich.</h2>
+        <p>Nutze kurze, eindeutige Produktnamen und überprüfe Menge und Größe vor dem Speichern.</p>
+
+        <ol>
+          <li>
+            <span>1</span>
+            <div>
+              <strong>Produkt beschreiben</strong>
+              <small>Name, Material und kurze Beschreibung</small>
+            </div>
+          </li>
+          <li>
+            <span>2</span>
+            <div>
+              <strong>Bestand zuordnen</strong>
+              <small>Kategorie, Hersteller und Zielgruppe</small>
+            </div>
+          </li>
+          <li>
+            <span>3</span>
+            <div>
+              <strong>Gemeinsam nutzen</strong>
+              <small>Nach dem Speichern erscheint der Artikel im Dashboard</small>
+            </div>
+          </li>
+        </ol>
+
+        <a routerLink="/resources">Alle Produkte ansehen</a>
+      </aside>
+    </div>
   </section>
 </main>
