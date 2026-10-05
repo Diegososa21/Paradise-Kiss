@@ -28,6 +28,19 @@ Requisitos: Node.js 26+ y Python 3.12+.
 
 ### Windows (PowerShell)
 
+Inicio automático: en la carpeta del proyecto ejecuta
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start-local.ps1
+```
+
+El script actualiza la rama, crea `.venv`, instala las dependencias, revisa
+`backend/.env` y la conexión con Supabase, y abre el backend (puerto 8000) y el
+frontend (puerto 4200) en dos ventanas. Si falta algo, indica qué corregir.
+Opciones: `-SkipGitSync` (no actualizar desde GitHub) y `-NoBrowser`.
+
+Pasos manuales:
+
 Im Projekt-Hauptordner ausführen. Die Datenbankzugangsdaten müssen bereits
 in `backend/.env` konfiguriert sein.
 
