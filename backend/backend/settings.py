@@ -235,4 +235,20 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'resources.permissions.IsApprovedAppUser',
     ],
+    'DEFAULT_THROTTLE_RATES': {
+        # Questions per team member to the KI-Assistent (protects the free Gemini quota).
+        'assistant': os.getenv('ASSISTANT_RATE_LIMIT', '30/hour'),
+    },
 }
+
+# KI-Assistent (Google Gemini, free tier). Without a key the assistant answers
+# with the built-in rule-based analysis and sends nothing outside the server.
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.8-flash')
+# Tried in order when the main model is overloaded (503) or out of free quota (429).
+GEMINI_FALLBACK_MODELS = [
+    model.strip()
+    for model in os.getenv('GEMINI_FALLBACK_MODELS', 'gemini-3.5-flash-lite').split(',')
+    if model.strip()
+]
+GEMINI_TIMEOUT_SECONDS = int(os.getenv('GEMINI_TIMEOUT_SECONDS', '15'))

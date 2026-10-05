@@ -347,6 +347,88 @@ textarea {
   resize: vertical;
 }
 
+.label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.quick-add-toggle {
+  padding: 0;
+  border: 0;
+  color: var(--pink-dark);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.quick-add-toggle:hover,
+.quick-add-toggle:focus-visible {
+  text-decoration: underline;
+}
+
+.quick-add {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px dashed #e2c9ea;
+  border-radius: 16px;
+  background: #fff9fd;
+}
+
+.quick-add label {
+  font-size: 11px;
+}
+
+.quick-add input {
+  min-height: 42px;
+  font-size: 13px;
+}
+
+.quick-add-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.quick-add-save,
+.quick-add-cancel {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.quick-add-save {
+  border: 0;
+  color: #fff;
+  background: var(--purple);
+}
+
+.quick-add-save:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.quick-add-cancel {
+  border: 1px solid #e7dce9;
+  color: var(--ink);
+  background: #fff;
+}
+
+.field-hint {
+  padding-left: 2px;
+  color: var(--muted, #7a6b8f);
+  font-size: 11px;
+  font-weight: 600;
+}
+
 .field-error {
   padding-left: 2px;
   color: #ba1f6f;
@@ -425,7 +507,7 @@ textarea {
 
 .form-aside {
   position: sticky;
-  top: 22px;
+  top: 96px;
   padding: 28px 24px;
   overflow: hidden;
   color: #fff;

@@ -3,9 +3,18 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
-import { InventorySale, Resource, StockMovement } from '../../../models/resource.model';
+import { finalize, forkJoin } from 'rxjs';
+import {
+  Category,
+  Gender,
+  InventorySale,
+  Manufacturer,
+  Resource,
+  ResourceDetails,
+  StockMovement,
+} from '../../../models/resource.model';
 import { ResourceService } from '../../resource.service';
+import { formatPrice, parsePrice } from '../../../shared/price';
 import { NavigationSidebarComponent } from '../../../shared/navigation-sidebar/navigation-sidebar';
 
 @Component({
@@ -26,6 +35,15 @@ export class ResourceList implements OnInit {
   readonly restockShelves = signal<Record<number, string>>({});
   readonly restockBins = signal<Record<number, string>>({});
   readonly reorderThresholds = signal<Record<number, number>>({});
+  readonly wholesalePrices = signal<Record<number, string>>({});
+  readonly retailPrices = signal<Record<number, string>>({});
+  readonly formatPrice = formatPrice;
+  readonly editingResourceId = signal<number | null>(null);
+  readonly detailDraft = signal<ResourceDetails | null>(null);
+  readonly detailOptionsLoading = signal(false);
+  readonly categories = signal<Category[]>([]);
+  readonly manufacturers = signal<Manufacturer[]>([]);
+  readonly genders = signal<Gender[]>([]);
   readonly rowMessages = signal<Record<number, string>>({});
   readonly rowErrors = signal<Record<number, string>>({});
   readonly busyResourceId = signal<number | null>(null);
@@ -71,6 +89,16 @@ export class ResourceList implements OnInit {
           this.reorderThresholds.set(
             Object.fromEntries(
               resources.map((resource) => [resource.id, resource.reorder_threshold]),
+            ),
+          );
+          this.wholesalePrices.set(
+            Object.fromEntries(
+              resources.map((resource) => [resource.id, this.priceInput(resource.wholesale_price)]),
+            ),
+          );
+          this.retailPrices.set(
+            Object.fromEntries(
+              resources.map((resource) => [resource.id, this.priceInput(resource.retail_price)]),
             ),
           );
         },
@@ -136,6 +164,90 @@ export class ResourceList implements OnInit {
     }));
   }
 
+  startEditingDetails(resource: Resource): void {
+    this.clearRowFeedback(resource.id);
+    this.editingResourceId.set(resource.id);
+    this.detailDraft.set({
+      name: resource.name,
+      desc: resource.desc,
+      size: resource.size,
+      material: resource.material,
+      category: resource.category,
+      manufacturer: resource.manufacturer,
+      gender: resource.gender,
+    });
+    this.loadDetailOptions(resource.id);
+  }
+
+  cancelEditingDetails(): void {
+    this.editingResourceId.set(null);
+    this.detailDraft.set(null);
+  }
+
+  updateDetailDraft<K extends keyof ResourceDetails>(field: K, value: ResourceDetails[K]): void {
+    this.detailDraft.update((draft) => (draft ? { ...draft, [field]: value } : draft));
+  }
+
+  saveDetails(resource: Resource): void {
+    const draft = this.detailDraft();
+    if (!draft) return;
+    this.clearRowFeedback(resource.id);
+
+    const details: ResourceDetails = {
+      ...draft,
+      name: draft.name.trim(),
+      desc: draft.desc.trim(),
+      size: draft.size.trim(),
+      material: draft.material.trim(),
+      category: Number(draft.category),
+      manufacturer: Number(draft.manufacturer),
+      gender: Number(draft.gender),
+    };
+    if (!details.name || !details.desc || !details.size || !details.material) {
+      this.setRowError(resource.id, 'Name, Beschreibung, Größe und Material sind erforderlich.');
+      return;
+    }
+    if (details.size.length > 10) {
+      this.setRowError(resource.id, 'Die Größe darf höchstens 10 Zeichen haben.');
+      return;
+    }
+    if (!details.category || !details.manufacturer || !details.gender) {
+      this.setRowError(resource.id, 'Bitte Kategorie, Lieferant und Geschlecht auswählen.');
+      return;
+    }
+
+    this.busyResourceId.set(resource.id);
+    this.resourceService
+      .updateDetails(resource.id, details)
+      .pipe(finalize(() => this.busyResourceId.set(null)))
+      .subscribe({
+        next: (updatedResource) => {
+          this.resources.update((resources) =>
+            resources.map((item) => (item.id === updatedResource.id ? updatedResource : item)),
+          );
+          this.cancelEditingDetails();
+          this.rowMessages.update((messages) => ({
+            ...messages,
+            [resource.id]: 'Die Produktdetails wurden gespeichert.',
+          }));
+        },
+        error: (error: unknown) => {
+          this.setRowError(
+            resource.id,
+            this.errorDetail(error, 'Die Produktdetails konnten nicht gespeichert werden.'),
+          );
+        },
+      });
+  }
+
+  setWholesalePrice(resourceId: number, value: string): void {
+    this.wholesalePrices.update((prices) => ({ ...prices, [resourceId]: value }));
+  }
+
+  setRetailPrice(resourceId: number, value: string): void {
+    this.retailPrices.update((prices) => ({ ...prices, [resourceId]: value }));
+  }
+
   saveInventorySettings(resource: Resource): void {
     this.clearRowFeedback(resource.id);
     const shelfNumber = (this.restockShelves()[resource.id] ?? '').trim();
@@ -150,6 +262,16 @@ export class ResourceList implements OnInit {
       this.setRowError(resource.id, 'Der Meldebestand muss 0 oder größer sein.');
       return;
     }
+    const wholesalePrice = parsePrice(
+      this.wholesalePrices()[resource.id] ?? this.priceInput(resource.wholesale_price),
+    );
+    const retailPrice = parsePrice(
+      this.retailPrices()[resource.id] ?? this.priceInput(resource.retail_price),
+    );
+    if (wholesalePrice === null || retailPrice === null) {
+      this.setRowError(resource.id, 'Bitte WHS- und RT-Preis wie 24,50 eingeben.');
+      return;
+    }
 
     this.busyResourceId.set(resource.id);
     this.resourceService
@@ -157,6 +279,8 @@ export class ResourceList implements OnInit {
         shelf_number: shelfNumber,
         bin_number: binNumber,
         reorder_threshold: reorderThreshold,
+        wholesale_price: wholesalePrice,
+        retail_price: retailPrice,
       })
       .pipe(finalize(() => this.busyResourceId.set(null)))
       .subscribe({
@@ -166,7 +290,7 @@ export class ResourceList implements OnInit {
           );
           this.rowMessages.update((messages) => ({
             ...messages,
-            [resource.id]: 'Lagerplatz und Meldebestand wurden gespeichert.',
+            [resource.id]: 'Lagerplatz, Meldebestand und Preise wurden gespeichert.',
           }));
         },
         error: (error: unknown) => {
@@ -287,6 +411,34 @@ export class ResourceList implements OnInit {
       });
   }
 
+  /** Loads the choices for the detail form once, the first time it is opened. */
+  private loadDetailOptions(resourceId: number): void {
+    if (this.categories().length && this.manufacturers().length && this.genders().length) return;
+
+    this.detailOptionsLoading.set(true);
+    forkJoin({
+      categories: this.resourceService.getCategories(),
+      manufacturers: this.resourceService.getManufacturers(),
+      genders: this.resourceService.getGenders(),
+    })
+      .pipe(finalize(() => this.detailOptionsLoading.set(false)))
+      .subscribe({
+        next: ({ categories, manufacturers, genders }) => {
+          this.categories.set(categories);
+          this.manufacturers.set(manufacturers);
+          this.genders.set(genders);
+        },
+        error: () => {
+          this.setRowError(resourceId, 'Kategorien, Lieferanten und Geschlechter fehlen.');
+        },
+      });
+  }
+
+  /** "24.50" from the API → "24,50" for the German input field. */
+  private priceInput(value: string | null | undefined): string {
+    return value ? value.replace('.', ',') : '';
+  }
+
   private clearRowFeedback(resourceId: number): void {
     this.rowMessages.update((messages) => this.withoutKey(messages, resourceId));
     this.rowErrors.update((errors) => this.withoutKey(errors, resourceId));
@@ -311,6 +463,10 @@ export class ResourceList implements OnInit {
       return quantityError[0];
     }
     if (typeof quantityError === 'string') return quantityError;
+
+    for (const messages of Object.values((error.error ?? {}) as Record<string, unknown>)) {
+      if (Array.isArray(messages) && typeof messages[0] === 'string') return messages[0];
+    }
 
     return fallback;
   }

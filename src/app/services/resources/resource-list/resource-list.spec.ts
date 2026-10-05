@@ -15,11 +15,16 @@ describe('ResourceList', () => {
     sell: ReturnType<typeof vi.fn>;
     restock: ReturnType<typeof vi.fn>;
     updateInventorySettings: ReturnType<typeof vi.fn>;
+    updateDetails: ReturnType<typeof vi.fn>;
+    getCategories: ReturnType<typeof vi.fn>;
+    getManufacturers: ReturnType<typeof vi.fn>;
+    getGenders: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
   };
 
   const resource: Resource = {
     id: 10,
+    gtin: '2000000000107',
     name: 'Classic Shirt',
     amount: 300,
     desc: 'White cotton shirt',
@@ -35,6 +40,8 @@ describe('ResourceList', () => {
     bin_number: 'F-04',
     reorder_threshold: 5,
     purchase_date: '2026-10-01',
+    wholesale_price: '12.00',
+    retail_price: '34.99',
     created_at: '2026-10-05T08:00:00Z',
   };
 
@@ -44,6 +51,8 @@ describe('ResourceList', () => {
     resource_name: 'Classic Shirt',
     category_name: 'Shirts',
     quantity: 150,
+    unit_price: '34.99',
+    revenue: null,
     stock_before: 300,
     stock_after: 150,
     sold_by: 3,
@@ -100,6 +109,17 @@ describe('ResourceList', () => {
         .mockReturnValue(
           of({ ...resource, shelf_number: 'R-08', bin_number: 'F-09', reorder_threshold: 20 }),
         ),
+      updateDetails: vi.fn((_id: number, details: object) => of({ ...resource, ...details })),
+      getCategories: vi.fn().mockReturnValue(
+        of([
+          { id: 15, name: 'Shirts' },
+          { id: 16, name: 'Jeans' },
+        ]),
+      ),
+      getManufacturers: vi
+        .fn()
+        .mockReturnValue(of([{ id: 1, name: 'Paradise Textiles', location: 'Berlin' }])),
+      getGenders: vi.fn().mockReturnValue(of([{ id: 1, name: 'Unisex' }])),
       delete: vi.fn().mockReturnValue(of(undefined)),
     };
 
@@ -197,6 +217,8 @@ describe('ResourceList', () => {
       shelf_number: 'R-08',
       bin_number: 'F-09',
       reorder_threshold: 20,
+      wholesale_price: 12,
+      retail_price: 34.99,
     });
     expect(component.resources()[0].reorder_threshold).toBe(20);
     expect(component.rowMessages()[resource.id]).toContain('gespeichert');
@@ -209,5 +231,78 @@ describe('ResourceList', () => {
 
     expect(resourceService.delete).toHaveBeenCalledWith(resource.id);
     expect(component.resources()).toHaveLength(0);
+  });
+
+  it('updates the WHS and RT prices typed with a German decimal comma', () => {
+    component.setWholesalePrice(resource.id, '13,50');
+    component.setRetailPrice(resource.id, '39,90');
+
+    component.saveInventorySettings(resource);
+
+    expect(resourceService.updateInventorySettings).toHaveBeenCalledWith(
+      resource.id,
+      expect.objectContaining({ wholesale_price: 13.5, retail_price: 39.9 }),
+    );
+  });
+
+  it('rejects an invalid price without calling the API', () => {
+    component.setRetailPrice(resource.id, '39,999');
+
+    component.saveInventorySettings(resource);
+
+    expect(resourceService.updateInventorySettings).not.toHaveBeenCalled();
+    expect(component.rowErrors()[resource.id]).toContain('RT-Preis');
+  });
+
+  function editButton(): HTMLButtonElement {
+    return fixture.nativeElement.querySelector('.edit-button');
+  }
+
+  it('edits the product details from the management card', () => {
+    editButton().click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.details-form')).not.toBeNull();
+    expect(resourceService.getCategories).toHaveBeenCalledTimes(1);
+
+    component.updateDetailDraft('name', '  Relaxed Shirt ');
+    component.updateDetailDraft('category', 16);
+    component.saveDetails(resource);
+    fixture.detectChanges();
+
+    expect(resourceService.updateDetails).toHaveBeenCalledWith(resource.id, {
+      name: 'Relaxed Shirt',
+      desc: resource.desc,
+      size: resource.size,
+      material: resource.material,
+      category: 16,
+      manufacturer: resource.manufacturer,
+      gender: resource.gender,
+    });
+    expect(component.resources()[0].name).toBe('Relaxed Shirt');
+    expect(fixture.nativeElement.querySelector('.details-form')).toBeNull();
+    expect(component.rowMessages()[resource.id]).toContain('Produktdetails');
+  });
+
+  it('does not save empty product details', () => {
+    component.startEditingDetails(resource);
+    component.updateDetailDraft('material', '   ');
+
+    component.saveDetails(resource);
+
+    expect(resourceService.updateDetails).not.toHaveBeenCalled();
+    expect(component.rowErrors()[resource.id]).toContain('Material');
+  });
+
+  it('discards the changes when editing is cancelled', () => {
+    component.startEditingDetails(resource);
+    component.updateDetailDraft('name', 'Something else');
+
+    component.cancelEditingDetails();
+    fixture.detectChanges();
+
+    expect(component.detailDraft()).toBeNull();
+    expect(component.resources()[0].name).toBe('Classic Shirt');
+    expect(editButton()).not.toBeNull();
   });
 });

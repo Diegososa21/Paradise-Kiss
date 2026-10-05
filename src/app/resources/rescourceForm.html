@@ -8,8 +8,6 @@
         <h1>Neuen Artikel anlegen</h1>
         <p>Ergänze den gemeinsamen Bestand mit allen wichtigen Produktdetails.</p>
       </div>
-
-      <app-user-session />
     </header>
 
     <div class="form-layout">
@@ -19,7 +17,10 @@
           <div>
             <span class="eyebrow">Wareneingang</span>
             <h2 id="resource-form-title">Produktinformationen</h2>
-            <p>Alle Felder werden für die gemeinsame Datenbank benötigt.</p>
+            <p>
+              Alle Felder werden für die gemeinsame Datenbank benötigt. Die GTIN wird beim Speichern
+              automatisch vergeben.
+            </p>
           </div>
         </header>
 
@@ -83,6 +84,38 @@
             </div>
 
             <div class="form-group">
+              <label for="wholesale_price">WHS-Preis (Einkauf, €)</label>
+              <input
+                type="text"
+                inputmode="decimal"
+                id="wholesale_price"
+                formControlName="wholesale_price"
+                autocomplete="off"
+                placeholder="z. B. 24,50"
+              />
+              @if (form.controls.wholesale_price.touched && form.controls.wholesale_price.invalid) {
+                <small class="field-error">Bitte einen Preis wie 24,50 eingeben.</small>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="retail_price">RT-Preis (Verkauf, €)</label>
+              <input
+                type="text"
+                inputmode="decimal"
+                id="retail_price"
+                formControlName="retail_price"
+                autocomplete="off"
+                placeholder="z. B. 79,99"
+              />
+              @if (form.controls.retail_price.touched && form.controls.retail_price.invalid) {
+                <small class="field-error">Bitte einen Preis wie 79,99 eingeben.</small>
+              } @else if (margin()) {
+                <small class="field-hint">{{ margin() }}</small>
+              }
+            </div>
+
+            <div class="form-group">
               <label for="purchase_date">Einkaufsdatum</label>
               <input type="date" id="purchase_date" formControlName="purchase_date" />
             </div>
@@ -98,23 +131,140 @@
             </div>
 
             <div class="form-group">
-              <label for="category">Kategorie</label>
+              <div class="label-row">
+                <label for="category">Kategorie</label>
+                <button
+                  type="button"
+                  class="quick-add-toggle"
+                  aria-controls="quick-add-category"
+                  [attr.aria-expanded]="quickAdd() === 'category'"
+                  (click)="openQuickAdd('category')"
+                >
+                  + Kategorie hinzufügen
+                </button>
+              </div>
               <select id="category" formControlName="category">
                 <option [ngValue]="0">Bitte auswählen</option>
-                @for (category of categories; track category.id) {
+                @for (category of categories(); track category.id) {
                   <option [ngValue]="category.id">{{ category.name }}</option>
                 }
               </select>
+              @if (quickAdd() === 'category') {
+                <div
+                  id="quick-add-category"
+                  class="quick-add"
+                  role="group"
+                  aria-label="Neue Kategorie"
+                  [formGroup]="categoryForm"
+                >
+                  <label for="new-category-name">Name der neuen Kategorie</label>
+                  <input
+                    id="new-category-name"
+                    type="text"
+                    formControlName="name"
+                    autocomplete="off"
+                    placeholder="z. B. Accessoires"
+                    (keydown.enter)="saveCategory($event)"
+                  />
+                  @if (categoryForm.controls.name.touched && categoryForm.controls.name.invalid) {
+                    <small class="field-error">Bitte einen Namen eingeben.</small>
+                  }
+                  @if (quickAddError()) {
+                    <small class="field-error" role="alert">{{ quickAddError() }}</small>
+                  }
+                  <div class="quick-add-actions">
+                    <button
+                      type="button"
+                      class="quick-add-save"
+                      [disabled]="quickAddSaving()"
+                      (click)="saveCategory()"
+                    >
+                      {{ quickAddSaving() ? 'Wird gespeichert…' : 'Kategorie speichern' }}
+                    </button>
+                    <button type="button" class="quick-add-cancel" (click)="closeQuickAdd()">
+                      Abbrechen
+                    </button>
+                  </div>
+                </div>
+              }
             </div>
 
             <div class="form-group">
-              <label for="manufacturer">Hersteller</label>
+              <div class="label-row">
+                <label for="manufacturer">Lieferant</label>
+                <button
+                  type="button"
+                  class="quick-add-toggle"
+                  aria-controls="quick-add-manufacturer"
+                  [attr.aria-expanded]="quickAdd() === 'manufacturer'"
+                  (click)="openQuickAdd('manufacturer')"
+                >
+                  + Lieferant hinzufügen
+                </button>
+              </div>
               <select id="manufacturer" formControlName="manufacturer">
                 <option [ngValue]="0">Bitte auswählen</option>
-                @for (manufacturer of manufacturers; track manufacturer.id) {
-                  <option [ngValue]="manufacturer.id">{{ manufacturer.name }}</option>
+                @for (manufacturer of manufacturers(); track manufacturer.id) {
+                  <option [ngValue]="manufacturer.id">
+                    {{ manufacturer.name }} · {{ manufacturer.location }}
+                  </option>
                 }
               </select>
+              @if (quickAdd() === 'manufacturer') {
+                <div
+                  id="quick-add-manufacturer"
+                  class="quick-add"
+                  role="group"
+                  aria-label="Neuer Lieferant"
+                  [formGroup]="manufacturerForm"
+                >
+                  <label for="new-manufacturer-name">Name des Lieferanten</label>
+                  <input
+                    id="new-manufacturer-name"
+                    type="text"
+                    formControlName="name"
+                    autocomplete="off"
+                    placeholder="z. B. Nordic Wool GmbH"
+                    (keydown.enter)="saveManufacturer($event)"
+                  />
+                  @if (
+                    manufacturerForm.controls.name.touched && manufacturerForm.controls.name.invalid
+                  ) {
+                    <small class="field-error">Bitte einen Namen eingeben.</small>
+                  }
+                  <label for="new-manufacturer-location">Standort</label>
+                  <input
+                    id="new-manufacturer-location"
+                    type="text"
+                    formControlName="location"
+                    autocomplete="off"
+                    placeholder="z. B. Hamburg"
+                    (keydown.enter)="saveManufacturer($event)"
+                  />
+                  @if (
+                    manufacturerForm.controls.location.touched &&
+                    manufacturerForm.controls.location.invalid
+                  ) {
+                    <small class="field-error">Bitte einen Standort eingeben.</small>
+                  }
+                  @if (quickAddError()) {
+                    <small class="field-error" role="alert">{{ quickAddError() }}</small>
+                  }
+                  <div class="quick-add-actions">
+                    <button
+                      type="button"
+                      class="quick-add-save"
+                      [disabled]="quickAddSaving()"
+                      (click)="saveManufacturer()"
+                    >
+                      {{ quickAddSaving() ? 'Wird gespeichert…' : 'Lieferant speichern' }}
+                    </button>
+                    <button type="button" class="quick-add-cancel" (click)="closeQuickAdd()">
+                      Abbrechen
+                    </button>
+                  </div>
+                </div>
+              }
             </div>
 
             <div class="form-group">
@@ -131,18 +281,21 @@
               <label for="gender">Geschlecht</label>
               <select id="gender" formControlName="gender">
                 <option [ngValue]="0">Bitte auswählen</option>
-                @for (gender of genders; track gender.id) {
+                @for (gender of genders(); track gender.id) {
                   <option [ngValue]="gender.id">{{ gender.name }}</option>
                 }
               </select>
             </div>
           </div>
 
-          @if (optionsLoading) {
+          @if (optionsLoading()) {
             <p class="form-notice" role="status">Auswahldaten werden geladen…</p>
           }
-          @if (optionsError) {
-            <p class="form-notice form-notice--error" role="alert">{{ optionsError }}</p>
+          @if (optionsError()) {
+            <p class="form-notice form-notice--error" role="alert">{{ optionsError() }}</p>
+          }
+          @if (quickAddSuccess()) {
+            <p class="form-notice form-notice--success" role="status">{{ quickAddSuccess() }}</p>
           }
 
           @if (form.touched && form.invalid) {
@@ -151,26 +304,26 @@
             </p>
           }
 
-          @if (successMessage) {
-            <p class="form-notice form-notice--success" role="status">{{ successMessage }}</p>
+          @if (successMessage()) {
+            <p class="form-notice form-notice--success" role="status">{{ successMessage() }}</p>
           }
-          @if (errorMessage) {
-            <p class="form-notice form-notice--error" role="alert">{{ errorMessage }}</p>
+          @if (errorMessage()) {
+            <p class="form-notice form-notice--error" role="alert">{{ errorMessage() }}</p>
           }
 
           <div class="actions">
             <button
               type="submit"
               class="primary-action"
-              [disabled]="submitting || optionsLoading || !!optionsError"
+              [disabled]="submitting() || optionsLoading() || !!optionsError()"
             >
-              {{ submitting ? 'Wird gespeichert…' : 'Artikel speichern' }}
+              {{ submitting() ? 'Wird gespeichert…' : 'Artikel speichern' }}
             </button>
             <button
               type="button"
               class="secondary-action"
               (click)="resetForm()"
-              [disabled]="submitting"
+              [disabled]="submitting()"
             >
               Zurücksetzen
             </button>
@@ -195,7 +348,7 @@
             <span>2</span>
             <div>
               <strong>Bestand zuordnen</strong>
-              <small>Kategorie, Hersteller und Zielgruppe</small>
+              <small>Kategorie, Lieferant und Zielgruppe</small>
             </div>
           </li>
           <li>

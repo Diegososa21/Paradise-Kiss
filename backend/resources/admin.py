@@ -14,15 +14,19 @@ from .models import (
 @admin.register(resources)
 class ResourceAdmin(admin.ModelAdmin):
     list_display = (
+        'gtin',
         'name',
         'amount',
+        'wholesale_price',
+        'retail_price',
         'reorder_threshold',
         'shelf_number',
         'bin_number',
         'purchase_date',
     )
     list_filter = ('category', 'manufacturer', 'gender')
-    search_fields = ('name', 'shelf_number', 'bin_number')
+    search_fields = ('gtin', 'name', 'shelf_number', 'bin_number')
+    readonly_fields = ('gtin',)
 
 
 @admin.register(StockMovement)

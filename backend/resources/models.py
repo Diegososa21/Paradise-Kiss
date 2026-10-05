@@ -1,5 +1,10 @@
+from decimal import Decimal
+
 from django.conf import settings
-from django.db import models
+from django.core.validators import MinValueValidator
+from django.db import models, transaction
+
+from .gtin import build_gtin
 
 class Manufacturer(models.Model):
     name = models.CharField(max_length=200, unique=True)
@@ -21,6 +26,15 @@ class Gender(models.Model):
         return self.name
 
 class resources(models.Model):
+    gtin = models.CharField(
+        'GTIN',
+        max_length=13,
+        unique=True,
+        null=True,
+        blank=True,
+        editable=False,
+        help_text='Globale Artikelnummer (GTIN-13), wird beim Speichern automatisch vergeben.',
+    )
     name = models.CharField(max_length=200)
     amount = models.IntegerField()
     desc = models.CharField(max_length=200)
@@ -33,6 +47,20 @@ class resources(models.Model):
     bin_number = models.CharField(max_length=30, blank=True, default='')
     reorder_threshold = models.PositiveIntegerField(default=5)
     purchase_date = models.DateField(null=True, blank=True)
+    wholesale_price = models.DecimalField(
+        'WHS-Preis',
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0'))],
+        help_text='Einkaufspreis (Wholesale) pro Stück in Euro.',
+    )
+    retail_price = models.DecimalField(
+        'RT-Preis',
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0'))],
+        help_text='Verkaufspreis (Retail) pro Stück in Euro.',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -41,10 +69,27 @@ class resources(models.Model):
                 condition=models.Q(amount__gte=0),
                 name='resource_amount_non_negative',
             ),
+            models.CheckConstraint(
+                condition=models.Q(wholesale_price__gte=0, retail_price__gte=0),
+                name='resource_prices_non_negative',
+            ),
         ]
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if self.gtin:
+            return super().save(*args, **kwargs)
+
+        # The GTIN is derived from the primary key, so a new product is inserted
+        # first and numbered in the same transaction. Older rows without a GTIN
+        # receive theirs the next time they are saved.
+        using = kwargs.get('using')
+        with transaction.atomic(using=using):
+            super().save(*args, **kwargs)
+            self.gtin = build_gtin(self.pk)
+            super().save(using=using, update_fields=['gtin'])
 
 
 class SalesData(models.Model):
@@ -82,6 +127,14 @@ class InventorySale(models.Model):
     resource_name = models.CharField(max_length=200)
     category_name = models.CharField(max_length=200)
     quantity = models.PositiveIntegerField()
+    unit_price = models.DecimalField(
+        'Verkaufspreis',
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text='RT-Preis pro Stück zum Zeitpunkt des Verkaufs.',
+    )
     stock_before = models.PositiveIntegerField()
     stock_after = models.PositiveIntegerField()
     sold_by = models.ForeignKey(
@@ -120,6 +173,7 @@ class StockMovement(models.Model):
     class MovementType(models.TextChoices):
         SALE = 'sale', 'Verkauf'
         RESTOCK = 'restock', 'Nachbestellung'
+        CANCELLATION = 'cancellation', 'Storno'
 
     resource = models.ForeignKey(
         resources,
@@ -160,7 +214,7 @@ class StockMovement(models.Model):
                         stock_after=models.F('stock_before') - models.F('quantity'),
                     )
                     | models.Q(
-                        movement_type='restock',
+                        movement_type__in=['restock', 'cancellation'],
                         stock_after=models.F('stock_before') + models.F('quantity'),
                     )
                 ),

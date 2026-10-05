@@ -188,6 +188,7 @@ form button:disabled {
 
 .history-card li {
   display: flex;
+  align-items: center;
   gap: 12px;
   padding: 13px;
   border-radius: 15px;
@@ -205,6 +206,46 @@ form button:disabled {
   background: var(--cyan);
   font-size: 11px;
   font-weight: 900;
+}
+
+.cancel-sale {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 7px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  color: #ffd2e8;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.cancel-sale:hover:not(:disabled),
+.cancel-sale:focus-visible {
+  border-color: #ff59ab;
+  color: #fff;
+  background: #ff59ab;
+}
+
+.cancel-sale:disabled {
+  cursor: progress;
+  opacity: 0.55;
+}
+
+.history-feedback {
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: #0f3d27;
+  background: #c9f2dc;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.history-feedback--error {
+  color: #6b0f3d;
+  background: #ffd2e8;
 }
 
 .history-card li div {

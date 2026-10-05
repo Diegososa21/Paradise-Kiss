@@ -138,8 +138,46 @@ Abre `http://localhost:4200/`. El proxy local envía las solicitudes `/api` a
 Django en `http://127.0.0.1:8000`.
 
 Las páginas `Bestand`, `Verkäufe` y `Analyse` trabajan con las operaciones
-guardadas en PostgreSQL. Los gráficos no usan datos simulados: aparecerán y se
-actualizarán después de registrar ventas reales desde la aplicación.
+guardadas en PostgreSQL. El gráfico trimestral de `Analyse` y el Gesamtumsatz del
+dashboard (`/api/tables/sales-report/`) combinan dos fuentes:
+
+- 2023–2025: cifras trimestrales históricas de ejemplo (tabla `resources_salesdata`).
+- Desde 2026: las ventas registradas en la aplicación. Cada venta guarda el RT-Preis
+  del momento (`unit_price`), así que el Umsatz no cambia si después se modifica el precio.
+
+Una venta se puede anular en `Verkäufe` ("Stornieren"): desaparece del informe, el
+stock se devuelve y queda un movimiento "Storno" en el historial.
+
+### KI-Assistent (Analyse)
+
+En la página `Analyse` hay un chat que responde qué categorías y productos se
+venden más, cómo evoluciona el Umsatz y qué tipo de productos conviene comprar.
+
+Cómo funciona (`backend/resources/assistant.py`, endpoint `POST /api/tables/assistant/`):
+
+1. El backend calcula un resumen **agregado y anónimo**: ventas por categoría y
+   trimestre, ventas registradas por producto, stock, precios y márgenes. No
+   incluye nombres de usuario, emails ni contraseñas.
+2. Si `GEMINI_API_KEY` está configurada, envía la pregunta y ese resumen a Google
+   Gemini (capa gratuita, modelo `gemini-3.8-flash`; si está saturado o sin cuota,
+   prueba `gemini-3.5-flash-lite`) con `generate_content`, que no
+   guarda la conversación en Google. Gemini solo recibe datos: no puede leer ni
+   modificar la base de datos.
+3. Sin clave, o si Gemini falla o se agota la cuota gratuita, responde la
+   **Basis-Analyse**: reglas fijas en el backend, sin enviar nada fuera.
+
+Regla de compra: se compara el % de la demanda de cada categoría (último año
+completo) con su % del stock actual. Si la demanda es mayor que el stock, se
+recomienda comprar; también cuentan los artículos bajo la Meldeschwelle y la
+temporada (el Q4 es el trimestre más fuerte).
+
+Seguridad: solo usuarios del grupo `team`, máximo 30 preguntas por hora y usuario
+(`ASSISTANT_RATE_LIMIT`), la clave solo vive en `backend/.env` y nunca llega al
+navegador. En la UE/EEE, Google no usa los datos de la capa gratuita para
+entrenar sus modelos (Gemini API Additional Terms).
+
+Activar Gemini: crea una clave gratuita en https://aistudio.google.com/apikey,
+añade `GEMINI_API_KEY=...` en `backend/.env` y reinicia el backend.
 
 ### Notificaciones de inventario por correo
 

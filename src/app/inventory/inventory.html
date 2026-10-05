@@ -11,7 +11,6 @@
       <div class="workspace-header-actions">
         <a class="manage-link" routerLink="/inventory/manage">Bestand bearbeiten</a>
         <a class="workspace-primary-action" routerLink="/resources/new">+ Neuer Artikel</a>
-        <app-user-session />
       </div>
     </header>
 
@@ -37,41 +36,150 @@
       <header>
         <div>
           <h2 id="inventory-title">Produktübersicht</h2>
-          <p>Alle Größen, Kategorien und Hersteller auf einen Blick.</p>
+          <p>Alle Größen, Kategorien und Lieferanten auf einen Blick.</p>
         </div>
         <a routerLink="/inventory/manage">Verkäufe, Bestand und Löschung verwalten →</a>
       </header>
+
+      <div class="inventory-toolbar">
+        <label class="search-field" for="product-search">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <span class="visually-hidden">Produkte durchsuchen</span>
+          <input
+            id="product-search"
+            type="search"
+            autocomplete="off"
+            placeholder="GTIN, Name, Kategorie, Lieferant, Größe, Material, Lagerplatz …"
+            [value]="searchTerm()"
+            (input)="updateSearch($event)"
+          />
+        </label>
+        <button
+          type="button"
+          class="filter-toggle"
+          [class.filter-toggle--active]="filtersOpen() || activeFilterCount() > 0"
+          aria-controls="inventory-filters"
+          [attr.aria-expanded]="filtersOpen()"
+          (click)="toggleFilters()"
+        >
+          Filter
+          @if (activeFilterCount() > 0) {
+            <span class="filter-count">{{ activeFilterCount() }}</span>
+          }
+        </button>
+      </div>
+
+      @if (filtersOpen()) {
+        <div id="inventory-filters" class="filter-panel" role="group" aria-label="Produktfilter">
+          <label>
+            <span>Kategorie</span>
+            <select (change)="categoryFilter.set(selectId($event))">
+              <option value="" [selected]="categoryFilter() === null">Alle</option>
+              @for (option of categoryOptions(); track option.id) {
+                <option [value]="option.id" [selected]="categoryFilter() === option.id">
+                  {{ option.name }}
+                </option>
+              }
+            </select>
+          </label>
+          <label>
+            <span>Lieferant</span>
+            <select (change)="manufacturerFilter.set(selectId($event))">
+              <option value="" [selected]="manufacturerFilter() === null">Alle</option>
+              @for (option of manufacturerOptions(); track option.id) {
+                <option [value]="option.id" [selected]="manufacturerFilter() === option.id">
+                  {{ option.name }}
+                </option>
+              }
+            </select>
+          </label>
+          <label>
+            <span>Geschlecht</span>
+            <select (change)="genderFilter.set(selectId($event))">
+              <option value="" [selected]="genderFilter() === null">Alle</option>
+              @for (option of genderOptions(); track option.id) {
+                <option [value]="option.id" [selected]="genderFilter() === option.id">
+                  {{ option.name }}
+                </option>
+              }
+            </select>
+          </label>
+          <label>
+            <span>Größe</span>
+            <select (change)="sizeFilter.set(selectValue($event))">
+              <option value="" [selected]="sizeFilter() === ''">Alle</option>
+              @for (size of sizeOptions(); track size) {
+                <option [value]="size" [selected]="sizeFilter() === size">{{ size }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            <span>Bestand</span>
+            <select (change)="updateStockFilter($event)">
+              <option value="all" [selected]="stockFilter() === 'all'">Alle</option>
+              <option value="available" [selected]="stockFilter() === 'available'">
+                Verfügbar
+              </option>
+              <option value="low" [selected]="stockFilter() === 'low'">Niedriger Bestand</option>
+              <option value="empty" [selected]="stockFilter() === 'empty'">Ausverkauft</option>
+            </select>
+          </label>
+          <button type="button" class="filter-reset" (click)="resetFilters()">Zurücksetzen</button>
+        </div>
+      }
+
+      @if (!loading() && !error()) {
+        <p class="result-count" role="status">
+          @if (isFiltering()) {
+            {{ filteredResources().length }} von {{ resources().length }} Produkten
+          } @else {
+            {{ resources().length }} Produkte
+          }
+        </p>
+      }
 
       <div class="inventory-table-wrap">
         <table>
           <thead>
             <tr>
               <th scope="col">Produkt</th>
+              <th scope="col">GTIN</th>
               <th scope="col">Kategorie</th>
               <th scope="col">Geschlecht</th>
               <th scope="col">Größe</th>
               <th scope="col">Bestand</th>
+              <th scope="col" class="price-column">WHS-Preis</th>
+              <th scope="col" class="price-column">RT-Preis</th>
               <th scope="col">Lagerplatz</th>
               <th scope="col">Einkauf</th>
-              <th scope="col">Hersteller</th>
+              <th scope="col">Lieferant</th>
             </tr>
           </thead>
           <tbody>
             @if (loading()) {
               <tr class="inventory-state">
-                <td colspan="8">Produkte werden geladen…</td>
+                <td colspan="11">Produkte werden geladen…</td>
               </tr>
             } @else if (error()) {
               <tr class="inventory-state inventory-state--error">
-                <td colspan="8">{{ error() }}</td>
+                <td colspan="11">{{ error() }}</td>
               </tr>
             } @else if (sortedResources().length === 0) {
               <tr class="inventory-state">
-                <td colspan="8">Noch keine Produkte vorhanden.</td>
+                <td colspan="11">Noch keine Produkte vorhanden.</td>
+              </tr>
+            } @else if (filteredResources().length === 0) {
+              <tr class="inventory-state">
+                <td colspan="11">
+                  Keine Produkte passen zur Suche oder zu den Filtern.
+                  <button type="button" class="filter-reset" (click)="resetFilters()">
+                    Suche und Filter zurücksetzen
+                  </button>
+                </td>
               </tr>
             }
 
-            @for (item of sortedResources(); track item.id; let index = $index) {
+            @for (item of filteredResources(); track item.id; let index = $index) {
               <tr class="inventory-row">
                 <td>
                   <span
@@ -82,6 +190,9 @@
                   ></span>
                   <strong>{{ item.name }}</strong>
                 </td>
+                <td>
+                  <span class="gtin">{{ item.gtin || '—' }}</span>
+                </td>
                 <td>{{ item.category_name }}</td>
                 <td>{{ item.gender_name }}</td>
                 <td>
@@ -91,6 +202,10 @@
                   <span [class.low-stock]="item.amount <= item.reorder_threshold">
                     {{ item.amount }}
                   </span>
+                </td>
+                <td class="price-column">{{ formatPrice(item.wholesale_price) }}</td>
+                <td class="price-column">
+                  <strong>{{ formatPrice(item.retail_price) }}</strong>
                 </td>
                 <td>
                   @if (item.shelf_number || item.bin_number) {

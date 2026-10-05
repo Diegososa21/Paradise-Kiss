@@ -1,15 +1,15 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
-import { InventorySale, Resource } from '../models/resource.model';
+import { InventorySale, Resource, SalesReport } from '../models/resource.model';
 import { ResourceService } from '../services/resource.service';
 import { NavigationSidebarComponent } from '../shared/navigation-sidebar/navigation-sidebar';
-import { UserSessionComponent } from '../shared/user-session/user-session';
+import { RevenueSummaryComponent } from './revenue-summary/revenue-summary';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, NavigationSidebarComponent, UserSessionComponent],
+  imports: [RouterLink, NavigationSidebarComponent, RevenueSummaryComponent],
   styleUrl: './home.scss',
   templateUrl: './home.html',
 })
@@ -23,7 +23,9 @@ export class HomeComponent implements OnInit {
   protected readonly resourceError = signal('');
   protected readonly salesError = signal('');
   protected readonly itemTones = ['pink', 'orange', 'yellow'] as const;
-
+  protected readonly report = signal<SalesReport | null>(null);
+  protected readonly reportLoading = signal(true);
+  protected readonly reportError = signal('');
   protected readonly soldUnits = computed(() =>
     this.sales().reduce((total, sale) => total + sale.quantity, 0),
   );
@@ -92,6 +94,14 @@ export class HomeComponent implements OnInit {
       .subscribe({
         next: (resources) => this.resources.set(resources),
         error: () => this.resourceError.set('Die Datenbank konnte nicht geladen werden.'),
+      });
+
+    this.resourceService
+      .getSalesReport()
+      .pipe(finalize(() => this.reportLoading.set(false)))
+      .subscribe({
+        next: (report) => this.report.set(report),
+        error: () => this.reportError.set('Der Umsatz konnte nicht geladen werden.'),
       });
 
     this.resourceService

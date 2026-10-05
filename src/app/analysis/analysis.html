@@ -6,9 +6,8 @@
       <div>
         <span class="workspace-eyebrow">Analyse</span>
         <h1>Verkaufsreport</h1>
-        <p>Auswertung ausschließlich aus den tatsächlich registrierten Verkäufen.</p>
+        <p>Quartalsentwicklung seit 2023 und alle in der App registrierten Verkäufe.</p>
       </div>
-      <app-user-session />
     </header>
 
     <section class="workspace-summary" aria-label="Analysekennzahlen">
@@ -35,43 +34,56 @@
       <p class="analysis-state">Auswertung wird geladen…</p>
     } @else if (error()) {
       <p class="analysis-state analysis-state--error" role="alert">{{ error() }}</p>
-    } @else if (sales().length === 0) {
+    } @else if (chartPoints().length === 0) {
       <p class="analysis-state">Noch keine Verkaufsdaten vorhanden.</p>
+      <app-ki-assistant />
     } @else {
       <section class="analysis-grid">
-        <article class="trend-card">
-          <header class="sales-header">
-            <div>
-              <h2>Verkaufsdaten</h2>
-              <p>Quartalsentwicklung aus registrierten Verkäufen</p>
-            </div>
-            <span class="live-badge">{{ chartPoints().length }} Quartale</span>
-          </header>
+        <div class="analysis-main">
+          <article class="trend-card">
+            <header class="sales-header">
+              <div>
+                <h2>Verkaufsdaten</h2>
+                <p>Verkaufte Stück pro Quartal · Umsatz im Tooltip</p>
+              </div>
+              <span class="live-badge">{{ chartPoints().length }} Quartale</span>
+            </header>
 
-          <div class="chart-scroll">
-            <div class="sales-chart" role="img" aria-label="Verkäufe pro Quartal">
-              @for (point of chartPoints(); track point.year + '-' + point.quarter) {
-                <div
-                  class="sales-column"
-                  [attr.aria-label]="
-                    point.year + ' Q' + point.quarter + ': ' + point.units + ' verkaufte Artikel'
-                  "
-                  [title]="point.year + ' Q' + point.quarter + ': ' + point.units + ' Stück'"
-                >
-                  <span class="bar-value">{{ point.units }}</span>
-                  <div class="sales-bar-track" aria-hidden="true">
-                    <span
-                      [class]="'sales-bar sales-bar--' + point.tone"
-                      [style.height.%]="point.height"
-                    ></span>
+            @if (hasHistory()) {
+              <ul class="chart-legend" aria-label="Legende">
+                <li><span class="legend-swatch legend-swatch--history"></span>Historische Daten</li>
+                <li>
+                  <span class="legend-swatch legend-swatch--live"></span>Registrierte Verkäufe
+                </li>
+              </ul>
+            }
+
+            <div class="chart-scroll">
+              <div class="sales-chart" role="img" aria-label="Verkäufe pro Quartal">
+                @for (point of chartPoints(); track point.year + '-' + point.quarter) {
+                  <div
+                    class="sales-column"
+                    [class.sales-column--year-start]="point.quarter === 1"
+                    [attr.aria-label]="point.label"
+                    [title]="point.label"
+                  >
+                    <span class="bar-value">{{ point.units.toLocaleString('de-DE') }}</span>
+                    <div class="sales-bar-track" aria-hidden="true">
+                      <span
+                        [class]="'sales-bar sales-bar--' + point.tone"
+                        [style.height.%]="point.height"
+                      ></span>
+                    </div>
+                    <strong>Q{{ point.quarter }}</strong>
+                    <small>{{ point.year }}</small>
                   </div>
-                  <strong>Q{{ point.quarter }}</strong>
-                  <small>{{ point.year }}</small>
-                </div>
-              }
+                }
+              </div>
             </div>
-          </div>
-        </article>
+          </article>
+
+          <app-ki-assistant />
+        </div>
 
         <article class="products-card">
           <header>

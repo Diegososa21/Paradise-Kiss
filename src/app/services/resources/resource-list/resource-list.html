@@ -72,44 +72,196 @@
                   </div>
                 </header>
 
-                <dl>
-                  <div>
-                    <dt>Größe</dt>
-                    <dd>{{ resource.size }}</dd>
-                  </div>
-                  <div>
-                    <dt>Hersteller</dt>
-                    <dd>{{ resource.manufacturer_name }}</dd>
-                  </div>
-                  <div>
-                    <dt>Material</dt>
-                    <dd>{{ resource.material }}</dd>
-                  </div>
-                  <div>
-                    <dt>Geschlecht</dt>
-                    <dd>{{ resource.gender_name }}</dd>
-                  </div>
-                  <div>
-                    <dt>Regal</dt>
-                    <dd>{{ resource.shelf_number || '—' }}</dd>
-                  </div>
-                  <div>
-                    <dt>Fach</dt>
-                    <dd>{{ resource.bin_number || '—' }}</dd>
-                  </div>
-                  <div>
-                    <dt>Letzter Einkauf</dt>
-                    <dd>
-                      {{
-                        resource.purchase_date ? (resource.purchase_date | date: 'dd.MM.yyyy') : '—'
-                      }}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Meldeschwelle</dt>
-                    <dd>{{ resource.reorder_threshold }} Stück</dd>
-                  </div>
-                </dl>
+                @if (editingResourceId() === resource.id && detailDraft(); as draft) {
+                  <form
+                    class="details-form"
+                    [attr.aria-label]="'Produktdetails von ' + resource.name + ' bearbeiten'"
+                    (ngSubmit)="saveDetails(resource)"
+                  >
+                    <strong>Produktdetails bearbeiten</strong>
+                    <div class="details-grid">
+                      <label class="details-wide">
+                        Name
+                        <input
+                          type="text"
+                          name="name"
+                          maxlength="200"
+                          required
+                          [ngModel]="draft.name"
+                          (ngModelChange)="updateDetailDraft('name', $event)"
+                        />
+                      </label>
+                      <label class="details-wide">
+                        Beschreibung
+                        <textarea
+                          name="desc"
+                          rows="2"
+                          maxlength="200"
+                          required
+                          [ngModel]="draft.desc"
+                          (ngModelChange)="updateDetailDraft('desc', $event)"
+                        ></textarea>
+                      </label>
+                      <label>
+                        Größe
+                        <input
+                          type="text"
+                          name="size"
+                          maxlength="10"
+                          required
+                          [ngModel]="draft.size"
+                          (ngModelChange)="updateDetailDraft('size', $event)"
+                        />
+                      </label>
+                      <label>
+                        Material
+                        <input
+                          type="text"
+                          name="material"
+                          maxlength="200"
+                          required
+                          [ngModel]="draft.material"
+                          (ngModelChange)="updateDetailDraft('material', $event)"
+                        />
+                      </label>
+                      <label>
+                        Kategorie
+                        <select
+                          name="category"
+                          [ngModel]="draft.category"
+                          (ngModelChange)="updateDetailDraft('category', $event)"
+                          [disabled]="detailOptionsLoading()"
+                        >
+                          @for (category of categories(); track category.id) {
+                            <option [ngValue]="category.id">{{ category.name }}</option>
+                          } @empty {
+                            <option [ngValue]="draft.category">{{ resource.category_name }}</option>
+                          }
+                        </select>
+                      </label>
+                      <label>
+                        Lieferant
+                        <select
+                          name="manufacturer"
+                          [ngModel]="draft.manufacturer"
+                          (ngModelChange)="updateDetailDraft('manufacturer', $event)"
+                          [disabled]="detailOptionsLoading()"
+                        >
+                          @for (manufacturer of manufacturers(); track manufacturer.id) {
+                            <option [ngValue]="manufacturer.id">
+                              {{ manufacturer.name }} · {{ manufacturer.location }}
+                            </option>
+                          } @empty {
+                            <option [ngValue]="draft.manufacturer">
+                              {{ resource.manufacturer_name }}
+                            </option>
+                          }
+                        </select>
+                      </label>
+                      <label>
+                        Geschlecht
+                        <select
+                          name="gender"
+                          [ngModel]="draft.gender"
+                          (ngModelChange)="updateDetailDraft('gender', $event)"
+                          [disabled]="detailOptionsLoading()"
+                        >
+                          @for (gender of genders(); track gender.id) {
+                            <option [ngValue]="gender.id">{{ gender.name }}</option>
+                          } @empty {
+                            <option [ngValue]="draft.gender">{{ resource.gender_name }}</option>
+                          }
+                        </select>
+                      </label>
+                    </div>
+                    <p class="details-hint">
+                      GTIN, Bestand und Preise bleiben unverändert. Bestand ändert sich nur über
+                      Verkauf und Nachbestellung.
+                    </p>
+                    <div class="details-actions">
+                      <button
+                        type="submit"
+                        class="details-save"
+                        [disabled]="busyResourceId() !== null"
+                      >
+                        {{
+                          busyResourceId() === resource.id
+                            ? 'Wird gespeichert…'
+                            : 'Details speichern'
+                        }}
+                      </button>
+                      <button
+                        type="button"
+                        class="details-cancel"
+                        (click)="cancelEditingDetails()"
+                        [disabled]="busyResourceId() === resource.id"
+                      >
+                        Abbrechen
+                      </button>
+                    </div>
+                  </form>
+                } @else {
+                  <dl>
+                    <div>
+                      <dt>GTIN</dt>
+                      <dd>{{ resource.gtin || '—' }}</dd>
+                    </div>
+                    <div>
+                      <dt>WHS-Preis</dt>
+                      <dd>{{ formatPrice(resource.wholesale_price) }}</dd>
+                    </div>
+                    <div>
+                      <dt>RT-Preis</dt>
+                      <dd>{{ formatPrice(resource.retail_price) }}</dd>
+                    </div>
+                    <div>
+                      <dt>Größe</dt>
+                      <dd>{{ resource.size }}</dd>
+                    </div>
+                    <div>
+                      <dt>Lieferant</dt>
+                      <dd>{{ resource.manufacturer_name }}</dd>
+                    </div>
+                    <div>
+                      <dt>Material</dt>
+                      <dd>{{ resource.material }}</dd>
+                    </div>
+                    <div>
+                      <dt>Geschlecht</dt>
+                      <dd>{{ resource.gender_name }}</dd>
+                    </div>
+                    <div>
+                      <dt>Regal</dt>
+                      <dd>{{ resource.shelf_number || '—' }}</dd>
+                    </div>
+                    <div>
+                      <dt>Fach</dt>
+                      <dd>{{ resource.bin_number || '—' }}</dd>
+                    </div>
+                    <div>
+                      <dt>Letzter Einkauf</dt>
+                      <dd>
+                        {{
+                          resource.purchase_date
+                            ? (resource.purchase_date | date: 'dd.MM.yyyy')
+                            : '—'
+                        }}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Meldeschwelle</dt>
+                      <dd>{{ resource.reorder_threshold }} Stück</dd>
+                    </div>
+                  </dl>
+                  <button
+                    type="button"
+                    class="edit-button"
+                    (click)="startEditingDetails(resource)"
+                    [disabled]="busyResourceId() !== null"
+                  >
+                    Details bearbeiten
+                  </button>
+                }
 
                 <div class="movement-controls sale-controls">
                   <strong>Verkauf</strong>
@@ -173,7 +325,7 @@
                 </div>
 
                 <div class="movement-controls settings-controls">
-                  <strong>Lagereinstellungen</strong>
+                  <strong>Lagereinstellungen &amp; Preise</strong>
                   <div class="settings-grid">
                     <label>
                       Regalnummer
@@ -208,6 +360,28 @@
                         [disabled]="busyResourceId() === resource.id"
                       />
                     </label>
+                    <label>
+                      WHS-Preis (€)
+                      <input
+                        type="text"
+                        inputmode="decimal"
+                        [ngModel]="wholesalePrices()[resource.id]"
+                        (ngModelChange)="setWholesalePrice(resource.id, $event)"
+                        placeholder="24,50"
+                        [disabled]="busyResourceId() === resource.id"
+                      />
+                    </label>
+                    <label>
+                      RT-Preis (€)
+                      <input
+                        type="text"
+                        inputmode="decimal"
+                        [ngModel]="retailPrices()[resource.id]"
+                        (ngModelChange)="setRetailPrice(resource.id, $event)"
+                        placeholder="79,99"
+                        [disabled]="busyResourceId() === resource.id"
+                      />
+                    </label>
                   </div>
                   <button
                     type="button"
@@ -218,7 +392,7 @@
                     {{
                       busyResourceId() === resource.id
                         ? 'Wird gespeichert…'
-                        : 'Lagerdaten speichern'
+                        : 'Lagerdaten & Preise speichern'
                     }}
                   </button>
                 </div>
@@ -269,9 +443,9 @@
               <li>
                 <span
                   class="sale-quantity"
-                  [class.sale-quantity--restock]="movement.movement_type === 'restock'"
+                  [class.sale-quantity--restock]="movement.movement_type !== 'sale'"
                 >
-                  {{ movement.movement_type === 'restock' ? '+' : '−' }}{{ movement.quantity }}
+                  {{ movement.movement_type === 'sale' ? '−' : '+' }}{{ movement.quantity }}
                 </span>
                 <div>
                   <strong>{{ movement.resource_name }}</strong>

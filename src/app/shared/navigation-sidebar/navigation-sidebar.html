@@ -16,8 +16,47 @@
     <a routerLink="/resources/new" routerLinkActive="active" ariaCurrentWhenActive="page">
       Artikel
     </a>
-    <a routerLink="/inventory" routerLinkActive="active" ariaCurrentWhenActive="page"> Bestand </a>
+    <a
+      routerLink="/inventory"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      ariaCurrentWhenActive="page"
+    >
+      Bestand
+    </a>
     <a routerLink="/sales" routerLinkActive="active" ariaCurrentWhenActive="page">Verkäufe</a>
     <a routerLink="/analysis" routerLinkActive="active" ariaCurrentWhenActive="page">Analyse</a>
+  </nav>
+
+  <nav class="sidebar-nav sidebar-section" aria-labelledby="sidebar-management-title">
+    <span id="sidebar-management-title" class="sidebar-section-title">Verwaltung</span>
+    <a routerLink="/inventory/manage" routerLinkActive="active" ariaCurrentWhenActive="page">
+      Verkäufe &amp; Bestand verwalten
+    </a>
+    <a class="ai-link" routerLink="/analysis" fragment="ki-assistant">
+      <svg class="ai-sparkle" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="ai-sparkle-gradient" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#42d6eb" />
+            <stop offset="55%" stop-color="#b894fa" />
+            <stop offset="100%" stop-color="#ff59ab" />
+          </linearGradient>
+        </defs>
+        <path
+          fill="url(#ai-sparkle-gradient)"
+          d="M10 3c.6 3.9 3.1 6.4 7 7-3.9.6-6.4 3.1-7 7-.6-3.9-3.1-6.4-7-7 3.9-.6 6.4-3.1 7-7Z"
+        />
+        <path
+          fill="url(#ai-sparkle-gradient)"
+          d="M18.5 13.5c.3 1.9 1.3 2.9 3.2 3.2-1.9.3-2.9 1.3-3.2 3.2-.3-1.9-1.3-2.9-3.2-3.2 1.9-.3 2.9-1.3 3.2-3.2Z"
+        />
+        <path
+          fill="url(#ai-sparkle-gradient)"
+          d="M18 2c.2 1.3.9 2 2.2 2.2-1.3.2-2 .9-2.2 2.2-.2-1.3-.9-2-2.2-2.2 1.3-.2 2-.9 2.2-2.2Z"
+        />
+      </svg>
+      KI-Assistent
+      <span class="ai-badge">KI</span>
+    </a>
   </nav>
 </aside>

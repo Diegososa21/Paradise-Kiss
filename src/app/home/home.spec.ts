@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
-import { InventorySale, Resource } from '../models/resource.model';
+import { InventorySale, Resource, SalesReport } from '../models/resource.model';
 import { AuthService } from '../services/auth.service';
 import { ResourceService } from '../services/resource.service';
 import { HomeComponent } from './home';
@@ -13,6 +13,7 @@ describe('HomeComponent', () => {
   const resources: Resource[] = [
     {
       id: 3,
+      gtin: '2000000000039',
       name: 'White Tee',
       amount: 4,
       desc: 'Classic white tee',
@@ -28,10 +29,13 @@ describe('HomeComponent', () => {
       bin_number: 'F-04',
       reorder_threshold: 5,
       purchase_date: '2026-09-20',
+      wholesale_price: '12.00',
+      retail_price: '34.99',
       created_at: '2026-09-28T06:32:50Z',
     },
     {
       id: 4,
+      gtin: '2000000000046',
       name: 'Violet Top',
       amount: 12,
       desc: 'Mesh top',
@@ -47,6 +51,8 @@ describe('HomeComponent', () => {
       bin_number: 'F-02',
       reorder_threshold: 5,
       purchase_date: '2026-09-21',
+      wholesale_price: '12.00',
+      retail_price: '34.99',
       created_at: '2026-09-28T06:33:50Z',
     },
   ];
@@ -58,6 +64,8 @@ describe('HomeComponent', () => {
       resource_name: 'White Tee',
       category_name: 'Tees',
       quantity: 80,
+      unit_price: '34.99',
+      revenue: null,
       stock_before: 100,
       stock_after: 20,
       sold_by: 1,
@@ -70,6 +78,8 @@ describe('HomeComponent', () => {
       resource_name: 'Violet Top',
       category_name: 'Tops',
       quantity: 60,
+      unit_price: '34.99',
+      revenue: null,
       stock_before: 72,
       stock_after: 12,
       sold_by: 2,
@@ -77,6 +87,20 @@ describe('HomeComponent', () => {
       sold_at: '2026-10-01T10:00:00Z',
     },
   ];
+
+  const report: SalesReport = {
+    quarters: [
+      { year: 2025, quarter: 3, units: 684, revenue: '43260.00', source: 'historical' },
+      { year: 2025, quarter: 4, units: 851, revenue: '53811.00', source: 'historical' },
+      { year: 2026, quarter: 4, units: 140, revenue: '4898.60', source: 'live' },
+    ],
+    years: [
+      { year: 2025, units: 1535, revenue: '97071.00', source: 'historical' },
+      { year: 2026, units: 140, revenue: '4898.60', source: 'mixed' },
+    ],
+    total_units: 1675,
+    total_revenue: '101969.60',
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -88,6 +112,7 @@ describe('HomeComponent', () => {
           useValue: {
             getAll: () => of(resources),
             getInventorySales: () => of(sales),
+            getSalesReport: () => of(report),
           },
         },
         {
@@ -139,5 +164,21 @@ describe('HomeComponent', () => {
     expect(content).toContain('echte Verkäufe');
     expect(quickActions).toEqual(['/resources/new', '/sales', '/inventory', '/analysis']);
     expect(fixture.nativeElement.querySelector('.sales-column')).toBeNull();
+  });
+
+  it('shows the total revenue of all years including the history', () => {
+    const card: HTMLElement = fixture.nativeElement.querySelector('.revenue-card');
+    const text = card.textContent!.replace(/\s+/g, ' ');
+    const years = [...card.querySelectorAll('.revenue-years li')].map((row) =>
+      row.textContent!.replace(/\s+/g, ' ').trim(),
+    );
+
+    expect(text).toContain('Gesamtumsatz');
+    expect(text).toContain('101.969,60 €');
+    expect(text).toContain('2025–2026 · 1.675 verkaufte Stück');
+    expect(years[0]).toContain('2025');
+    expect(years[0]).toContain('97.071,00 €');
+    expect(years[0]).toContain('historische Daten');
+    expect(years[1]).toContain('historische Daten + registrierte Verkäufe');
   });
 });

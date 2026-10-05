@@ -6,12 +6,11 @@ import { finalize } from 'rxjs';
 import { InventorySale, Resource } from '../models/resource.model';
 import { ResourceService } from '../services/resource.service';
 import { NavigationSidebarComponent } from '../shared/navigation-sidebar/navigation-sidebar';
-import { UserSessionComponent } from '../shared/user-session/user-session';
 
 @Component({
   selector: 'app-sales',
   standalone: true,
-  imports: [DatePipe, FormsModule, NavigationSidebarComponent, UserSessionComponent],
+  imports: [DatePipe, FormsModule, NavigationSidebarComponent],
   templateUrl: './sales.html',
   styleUrl: './sales.scss',
 })
@@ -29,6 +28,9 @@ export class SalesComponent implements OnInit {
   protected readonly submitting = signal(false);
   protected readonly successMessage = signal('');
   protected readonly submitError = signal('');
+  protected readonly cancellingSaleId = signal<number | null>(null);
+  protected readonly historyMessage = signal('');
+  protected readonly historyError = signal('');
 
   protected readonly availableResources = computed(() =>
     [...this.resources()]
@@ -116,6 +118,49 @@ export class SalesComponent implements OnInit {
         },
         error: (error: unknown) => {
           this.submitError.set(this.errorDetail(error));
+        },
+      });
+  }
+
+  protected cancelSale(sale: InventorySale): void {
+    this.historyMessage.set('');
+    this.historyError.set('');
+    const restock = sale.resource
+      ? ` Die ${sale.quantity} Stück werden wieder dem Bestand hinzugefügt.`
+      : ' Der Artikel existiert nicht mehr, daher wird kein Bestand zurückgebucht.';
+    const confirmed = window.confirm(
+      `Verkauf von „${sale.resource_name}“ (${sale.quantity} Stück) wirklich stornieren?${restock}`,
+    );
+    if (!confirmed) return;
+
+    this.cancellingSaleId.set(sale.id);
+    this.resourceService
+      .cancelSale(sale.id)
+      .pipe(finalize(() => this.cancellingSaleId.set(null)))
+      .subscribe({
+        next: ({ resource: updatedResource }) => {
+          this.sales.update((sales) => sales.filter((item) => item.id !== sale.id));
+          if (updatedResource) {
+            this.resources.update((resources) =>
+              resources.map((item) => (item.id === updatedResource.id ? updatedResource : item)),
+            );
+            if (this.selectedResourceId() === null) {
+              this.selectedResourceId.set(updatedResource.id);
+              this.quantity.set(1);
+            }
+          }
+          this.historyMessage.set(
+            updatedResource
+              ? `Verkauf von „${sale.resource_name}“ storniert. Neuer Bestand: ${updatedResource.amount} Stück.`
+              : `Verkauf von „${sale.resource_name}“ storniert.`,
+          );
+        },
+        error: (error: unknown) => {
+          this.historyError.set(
+            error instanceof HttpErrorResponse && typeof error.error?.detail === 'string'
+              ? error.error.detail
+              : 'Der Verkauf konnte nicht storniert werden.',
+          );
         },
       });
   }

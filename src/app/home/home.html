@@ -9,7 +9,6 @@
       </div>
       <div class="header-actions">
         <a class="add-button" routerLink="/resources/new">+ Neuer Artikel</a>
-        <app-user-session />
       </div>
     </header>
 
@@ -65,5 +64,7 @@
         </div>
       </article>
     </section>
+
+    <app-revenue-summary [report]="report()" [loading]="reportLoading()" [error]="reportError()" />
   </section>
 </main>

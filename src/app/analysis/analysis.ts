@@ -1,15 +1,16 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { finalize } from 'rxjs';
-import { InventorySale, Resource } from '../models/resource.model';
+import { InventorySale, Resource, SalesReport } from '../models/resource.model';
 import { ResourceService } from '../services/resource.service';
+import { formatPrice } from '../shared/price';
 import { NavigationSidebarComponent } from '../shared/navigation-sidebar/navigation-sidebar';
-import { UserSessionComponent } from '../shared/user-session/user-session';
+import { KiAssistantComponent } from './ki-assistant/ki-assistant';
 
 @Component({
   selector: 'app-analysis',
   standalone: true,
-  imports: [DatePipe, NavigationSidebarComponent, UserSessionComponent],
+  imports: [DatePipe, NavigationSidebarComponent, KiAssistantComponent],
   templateUrl: './analysis.html',
   styleUrl: './analysis.scss',
 })
@@ -18,45 +19,47 @@ export class AnalysisComponent implements OnInit {
 
   protected readonly resources = signal<Resource[]>([]);
   protected readonly sales = signal<InventorySale[]>([]);
+  protected readonly report = signal<SalesReport | null>(null);
   protected readonly resourcesLoading = signal(true);
   protected readonly salesLoading = signal(true);
+  protected readonly reportLoading = signal(true);
   protected readonly resourceError = signal('');
   protected readonly salesError = signal('');
+  protected readonly reportError = signal('');
+  protected readonly formatPrice = formatPrice;
   protected readonly categoryTones = ['pink', 'cyan', 'orange', 'violet'] as const;
 
-  protected readonly loading = computed(() => this.resourcesLoading() || this.salesLoading());
-  protected readonly error = computed(() => this.resourceError() || this.salesError());
+  protected readonly loading = computed(
+    () => this.resourcesLoading() || this.salesLoading() || this.reportLoading(),
+  );
+  protected readonly error = computed(
+    () => this.resourceError() || this.salesError() || this.reportError(),
+  );
   protected readonly soldUnits = computed(() =>
     this.sales().reduce((total, sale) => total + sale.quantity, 0),
   );
   protected readonly latestSale = computed(() => this.sales()[0] ?? null);
 
+  /** History 2023–2025 (alternating violet/cyan per year) plus registered sales (pink). */
   protected readonly chartPoints = computed(() => {
-    const periods = new Map<string, { year: number; quarter: number; units: number }>();
-
-    for (const sale of this.sales()) {
-      const soldAt = new Date(sale.sold_at);
-      const year = soldAt.getFullYear();
-      const quarter = Math.floor(soldAt.getMonth() / 3) + 1;
-      const key = `${year}-${quarter}`;
-      const period = periods.get(key) ?? { year, quarter, units: 0 };
-      period.units += sale.quantity;
-      periods.set(key, period);
-    }
-
-    const points = [...periods.values()].sort(
-      (first, second) => first.year - second.year || first.quarter - second.quarter,
-    );
+    const points = this.report()?.quarters ?? [];
     const maximum = Math.max(...points.map((point) => point.units), 1);
-    const tones = ['violet', 'cyan', 'pink'] as const;
+    const historicalTones = ['violet', 'cyan'] as const;
     const years = [...new Set(points.map((point) => point.year))];
 
     return points.map((point) => ({
       ...point,
       height: Math.max(8, Math.round((point.units / maximum) * 100)),
-      tone: tones[Math.max(0, years.indexOf(point.year)) % tones.length],
+      tone:
+        point.source === 'historical'
+          ? historicalTones[years.indexOf(point.year) % historicalTones.length]
+          : 'pink',
+      label: `${point.year} Q${point.quarter}: ${point.units.toLocaleString('de-DE')} Stück · ${formatPrice(point.revenue)}${point.source === 'historical' ? ' (historische Daten)' : ''}`,
     }));
   });
+  protected readonly hasHistory = computed(() =>
+    this.chartPoints().some((point) => point.source !== 'live'),
+  );
 
   protected readonly productSummaries = computed(() => {
     const products = new Map<
@@ -100,6 +103,14 @@ export class AnalysisComponent implements OnInit {
       .subscribe({
         next: (resources) => this.resources.set(resources),
         error: () => this.resourceError.set('Die Artikel konnten nicht geladen werden.'),
+      });
+
+    this.resourceService
+      .getSalesReport()
+      .pipe(finalize(() => this.reportLoading.set(false)))
+      .subscribe({
+        next: (report) => this.report.set(report),
+        error: () => this.reportError.set('Die Quartalsdaten konnten nicht geladen werden.'),
       });
 
     this.resourceService

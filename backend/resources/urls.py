@@ -1,11 +1,15 @@
+from django.urls import path
 from rest_framework.routers import DefaultRouter
+
 from .views import (
+    AssistantView,
     CategoryViewSet,
     GenderViewSet,
     InventorySaleViewSet,
     ManufacturerViewSet,
     ResourceViewSet,
     SalesDataViewSet,
+    SalesReportView,
     StockMovementViewSet,
 )
 
@@ -18,4 +22,8 @@ router.register("sales", SalesDataViewSet)
 router.register("inventory-sales", InventorySaleViewSet)
 router.register("stock-movements", StockMovementViewSet)
 
-urlpatterns = router.urls
+urlpatterns = [
+    path('sales-report/', SalesReportView.as_view(), name='sales-report'),
+    path('assistant/', AssistantView.as_view(), name='assistant'),
+    *router.urls,
+]

@@ -122,6 +122,116 @@ h1 {
 }
 
 .product-panel,
+.edit-button {
+  display: block;
+  margin: 10px 0 0 auto;
+  padding: 8px 14px;
+  border: 1px solid #e2c9ea;
+  border-radius: 10px;
+  color: #3d1f61;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.edit-button:hover:not(:disabled),
+.edit-button:focus-visible {
+  border-color: #ed248f;
+  color: #ed248f;
+}
+
+.details-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px dashed #e2c9ea;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.details-form > strong {
+  font-size: 12px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.details-grid label {
+  display: grid;
+  gap: 6px;
+  color: #7a6b8f;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.details-wide {
+  grid-column: 1 / -1;
+}
+
+.details-grid input,
+.details-grid select,
+.details-grid textarea {
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 10px;
+  border: 1px solid #e7dce9;
+  border-radius: 10px;
+  color: #291f3b;
+  background: #fcf8fd;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  box-sizing: border-box;
+}
+
+.details-grid textarea {
+  resize: vertical;
+}
+
+.details-hint {
+  margin: 0;
+  color: #7a6b8f;
+  font-size: 10px;
+}
+
+.details-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.details-save,
+.details-cancel {
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.details-save {
+  border: 0;
+  color: #fff;
+  background: #3d1f61;
+}
+
+.details-cancel {
+  border: 1px solid #e7dce9;
+  color: #291f3b;
+  background: #fff;
+}
+
+.details-save:disabled,
+.details-cancel:disabled,
+.edit-button:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
 .sales-panel {
   border-radius: 26px;
   background: #fff;
@@ -380,7 +490,7 @@ button:disabled {
 
 .sales-panel {
   position: sticky;
-  top: 20px;
+  top: 96px;
   padding: 22px;
   color: #fff;
   background: #3d1f61;
@@ -509,6 +619,10 @@ button:disabled {
   .resource-card footer {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .details-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .sale-controls > div {

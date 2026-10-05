@@ -1,0 +1,138 @@
+:host {
+  --purple: #3d1f61;
+  --violet: #b894fa;
+  --pink: #ff59ab;
+  display: block;
+}
+
+.revenue-card {
+  padding: 24px 26px;
+  border-radius: 26px;
+  color: #fff;
+  background: var(--purple);
+  box-sizing: border-box;
+}
+
+.revenue-card > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.revenue-card h2,
+.revenue-card p {
+  margin: 0;
+}
+
+.revenue-eyebrow {
+  color: #ff92c8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.revenue-card h2 {
+  margin-top: 6px;
+  font-size: 20px;
+}
+
+.revenue-card header p {
+  margin-top: 5px;
+  color: #d9c2eb;
+  font-size: 12px;
+}
+
+.revenue-total {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  text-align: right;
+}
+
+.revenue-total strong {
+  font-size: clamp(26px, 3vw, 34px);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.revenue-total small {
+  color: #d9c2eb;
+  font-size: 11px;
+}
+
+.revenue-total small.alert {
+  color: #ffd2e8;
+}
+
+.revenue-years {
+  display: grid;
+  gap: 10px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.revenue-years li {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 120px 240px;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.revenue-year {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.revenue-bar {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.revenue-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--violet);
+}
+
+.revenue-bar span.revenue-bar--live {
+  background: var(--pink);
+}
+
+.revenue-years strong {
+  font-size: 13px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.revenue-years small {
+  color: #d9c2eb;
+  font-size: 10px;
+}
+
+@media (max-width: 760px) {
+  .revenue-card > header {
+    flex-direction: column;
+  }
+
+  .revenue-total {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .revenue-years li {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+  }
+
+  .revenue-years small {
+    grid-column: 2 / -1;
+  }
+}

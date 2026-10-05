@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 EVENT_LABELS = {
     'create': 'Artikel angelegt',
     'sale': 'Verkauf gebucht',
+    'sale_cancel': 'Verkauf storniert',
     'restock': 'Nachbestellung gebucht',
     'update': 'Artikel aktualisiert',
     'delete': 'Artikel gelöscht',

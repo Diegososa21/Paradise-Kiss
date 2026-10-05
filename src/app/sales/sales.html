@@ -8,7 +8,6 @@
         <h1>Verkauf erfassen</h1>
         <p>Verkaufsmenge buchen und den Restbestand sofort aktualisieren.</p>
       </div>
-      <app-user-session />
     </header>
 
     <section class="workspace-summary" aria-label="Verkaufsübersicht">
@@ -116,6 +115,15 @@
           <p class="history-state">Noch keine Verkäufe registriert.</p>
         }
 
+        @if (historyMessage()) {
+          <p class="history-feedback" role="status">{{ historyMessage() }}</p>
+        }
+        @if (historyError()) {
+          <p class="history-feedback history-feedback--error" role="alert">
+            {{ historyError() }}
+          </p>
+        }
+
         <ol>
           @for (sale of sales(); track sale.id) {
             <li>
@@ -127,6 +135,15 @@
                   {{ sale.sold_by_username }} · {{ sale.sold_at | date: 'dd.MM.yyyy HH:mm' }}
                 </small>
               </div>
+              <button
+                type="button"
+                class="cancel-sale"
+                [attr.aria-label]="'Verkauf von ' + sale.resource_name + ' stornieren'"
+                (click)="cancelSale(sale)"
+                [disabled]="cancellingSaleId() !== null"
+              >
+                {{ cancellingSaleId() === sale.id ? 'Wird storniert…' : 'Stornieren' }}
+              </button>
             </li>
           }
         </ol>

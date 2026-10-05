@@ -18,6 +18,13 @@
   box-sizing: border-box;
 }
 
+.analysis-main {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 24px;
+}
+
 .trend-card {
   min-width: 0;
   padding: 24px;
@@ -57,17 +64,49 @@ h2 {
   white-space: nowrap;
 }
 
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 16px 0 0;
+  padding: 0 4px;
+  list-style: none;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.chart-legend li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+}
+
+.legend-swatch--history {
+  background: linear-gradient(90deg, var(--violet) 50%, var(--cyan) 50%);
+}
+
+.legend-swatch--live {
+  background: var(--pink);
+}
+
 .chart-scroll {
-  margin-top: 26px;
+  margin-top: 18px;
   overflow-x: auto;
 }
 
 .sales-chart {
   display: grid;
-  grid-auto-columns: minmax(64px, 1fr);
+  grid-auto-columns: minmax(30px, 1fr);
   grid-auto-flow: column;
-  gap: 10px;
-  min-width: 680px;
+  gap: 6px;
+  min-width: 600px;
   height: 360px;
   padding: 22px 18px 12px;
   overflow: hidden;
@@ -96,6 +135,12 @@ h2 {
   color: var(--muted);
   font-size: 9px;
   font-weight: 800;
+  white-space: nowrap;
+}
+
+/* A thin line before every first quarter separates the years. */
+.sales-column--year-start {
+  box-shadow: inset 1px 0 0 rgba(61, 31, 97, 0.12);
 }
 
 .sales-bar-track {
@@ -106,9 +151,9 @@ h2 {
 
 .sales-bar {
   position: absolute;
-  right: 14%;
+  right: 10%;
   bottom: 0;
-  left: 14%;
+  left: 10%;
   min-height: 8px;
   border-radius: 9px 9px 3px 3px;
   transition: height 300ms ease;

@@ -74,6 +74,25 @@ class AuthApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.json()['authenticated'])
 
+    def test_teacher_login_uses_the_teacher_profile_picture(self):
+        self.add_to_team(
+            get_user_model().objects.create_user(
+                username='heyer.tim',
+                first_name='Tim',
+                last_name='Heyer',
+                password='A-secure-test-password-2026!',
+            )
+        )
+
+        response = self.post_json(
+            '/auth/login/',
+            {'username': 'heyer.tim', 'password': 'A-secure-test-password-2026!'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['user']['display_name'], 'Tim Heyer')
+        self.assertEqual(response.json()['user']['avatar_url'], '/profiles/teacher.png')
+
     def test_admin_account_cannot_login_to_the_app(self):
         get_user_model().objects.create_superuser(
             username='admin',

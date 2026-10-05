@@ -21,6 +21,7 @@ AVATAR_URLS = {
     'sosa.diego': '/profiles/diego.jpeg',
     'friedrich.nico': '/profiles/nico.jpeg',
     'tebben.fabian': '/profiles/fabian.jpeg',
+    'heyer.tim': '/profiles/teacher.png',
 }
 
 

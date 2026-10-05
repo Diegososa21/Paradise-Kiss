@@ -56,6 +56,23 @@ textarea {
   gap: 28px;
 }
 
+:root {
+  /* Width kept free in page headers for the fixed profile widget (app.scss). */
+  --session-widget-space: 280px;
+}
+
+.workspace-header,
+.dashboard-header,
+.page-header {
+  padding-right: var(--session-widget-space);
+}
+
+@media (max-width: 760px) {
+  :root {
+    --session-widget-space: 0px;
+  }
+}
+
 .workspace-header {
   display: flex;
   min-height: 82px;
