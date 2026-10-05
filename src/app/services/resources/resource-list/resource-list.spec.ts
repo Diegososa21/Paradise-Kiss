@@ -72,9 +72,9 @@ describe('ResourceList', () => {
   afterEach(() => vi.restoreAllMocks());
 
   it('loads inventory and initializes the sale quantity', () => {
-    expect(component.resources).toHaveLength(1);
-    expect(component.totalStock).toBe(300);
-    expect(component.saleQuantities[resource.id]).toBe(1);
+    expect(component.resources()).toHaveLength(1);
+    expect(component.totalStock()).toBe(300);
+    expect(component.saleQuantities()[resource.id]).toBe(1);
     expect(fixture.nativeElement.textContent).toContain('Classic Shirt');
   });
 
@@ -88,32 +88,32 @@ describe('ResourceList', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(component.resources).toHaveLength(1);
-    expect(component.error).toBe('');
-    expect(component.salesError).toContain('Verkaufshistorie');
+    expect(component.resources()).toHaveLength(1);
+    expect(component.error()).toBe('');
+    expect(component.salesError()).toContain('Verkaufshistorie');
     expect(fixture.nativeElement.textContent).toContain('Classic Shirt');
   });
 
   it('registers a sale and updates the remaining stock', () => {
-    component.saleQuantities[resource.id] = 150;
+    component.setSaleQuantity(resource.id, 150);
 
     component.sell(resource);
     fixture.detectChanges();
 
     expect(resourceService.sell).toHaveBeenCalledWith(resource.id, 150);
-    expect(component.resources[0].amount).toBe(150);
-    expect(component.recentSales[0]).toEqual(sale);
-    expect(component.totalSalesCount).toBe(1);
-    expect(component.rowMessages[resource.id]).toContain('150 verbleiben');
+    expect(component.resources()[0].amount).toBe(150);
+    expect(component.recentSales()[0]).toEqual(sale);
+    expect(component.totalSalesCount()).toBe(1);
+    expect(component.rowMessages()[resource.id]).toContain('150 verbleiben');
   });
 
   it('rejects a sale larger than the available stock before calling the API', () => {
-    component.saleQuantities[resource.id] = 301;
+    component.setSaleQuantity(resource.id, 301);
 
     component.sell(resource);
 
     expect(resourceService.sell).not.toHaveBeenCalled();
-    expect(component.rowErrors[resource.id]).toContain('zwischen 1 und 300');
+    expect(component.rowErrors()[resource.id]).toContain('zwischen 1 und 300');
   });
 
   it('deletes an article after confirmation', () => {
@@ -122,6 +122,6 @@ describe('ResourceList', () => {
     component.deleteResource(resource);
 
     expect(resourceService.delete).toHaveBeenCalledWith(resource.id);
-    expect(component.resources).toHaveLength(0);
+    expect(component.resources()).toHaveLength(0);
   });
 });
