@@ -14,6 +14,7 @@ from .models import (
     StockMovement,
     resources,
 )
+from .notifications import schedule_inventory_notification
 from .permissions import IsApprovedAppUser
 from .serializers import (
     CategorySerializer,
@@ -85,6 +86,16 @@ class ResourceViewSet(
                 stock_after=resource.amount,
                 performed_by=request.user,
             )
+            schedule_inventory_notification(
+                event='sale',
+                resource_name=resource.name,
+                actor=request.user,
+                details={
+                    'Verkaufte Menge': quantity,
+                    'Bestand vorher': stock_before,
+                    'Bestand danach': resource.amount,
+                },
+            )
 
         return Response(
             {
@@ -134,6 +145,18 @@ class ResourceViewSet(
                 purchase_date=purchase_date,
                 performed_by=request.user,
             )
+            schedule_inventory_notification(
+                event='restock',
+                resource_name=resource.name,
+                actor=request.user,
+                details={
+                    'Nachbestellte Menge': quantity,
+                    'Bestand vorher': stock_before,
+                    'Bestand danach': resource.amount,
+                    'Einkaufsdatum': purchase_date.strftime('%d.%m.%Y'),
+                    'Lagerplatz': f'{resource.shelf_number} / {resource.bin_number}',
+                },
+            )
 
         return Response(
             {
@@ -159,13 +182,52 @@ class ResourceViewSet(
                 raise NotFound('Der Artikel wurde nicht gefunden.') from error
 
             update_fields = []
+            previous_values = {
+                field_name: getattr(resource, field_name)
+                for field_name in input_serializer.validated_data
+            }
             for field_name, value in input_serializer.validated_data.items():
                 setattr(resource, field_name, value)
                 update_fields.append(field_name)
 
             resource.save(update_fields=update_fields)
+            field_labels = {
+                'shelf_number': 'Regalnummer',
+                'bin_number': 'Fachnummer',
+                'reorder_threshold': 'Meldebestand',
+            }
+            changed_values = ', '.join(
+                f'{field_labels[field_name]}: {previous_values[field_name] or "—"} → '
+                f'{getattr(resource, field_name) or "—"}'
+                for field_name in update_fields
+            )
+            schedule_inventory_notification(
+                event='update',
+                resource_name=resource.name,
+                actor=request.user,
+                details={'Änderungen': changed_values},
+            )
 
         return Response(ResourceSerializer(resource).data)
+
+    def destroy(self, request, *args, **kwargs):
+        with transaction.atomic():
+            resource = self.get_object()
+            resource_name = resource.name
+            resource_amount = resource.amount
+            resource_location = f'{resource.shelf_number or "—"} / {resource.bin_number or "—"}'
+            resource.delete()
+            schedule_inventory_notification(
+                event='delete',
+                resource_name=resource_name,
+                actor=request.user,
+                details={
+                    'Letzter Bestand': resource_amount,
+                    'Letzter Lagerplatz': resource_location,
+                },
+            )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class ManufacturerViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
     queryset = Manufacturer.objects.order_by("name")

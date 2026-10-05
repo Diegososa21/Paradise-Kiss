@@ -186,7 +186,30 @@ SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_SECURE_HSTS_SECONDS', '0'))
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+email_host = os.getenv('EMAIL_HOST', '')
+EMAIL_BACKEND = os.getenv(
+    'DJANGO_EMAIL_BACKEND',
+    (
+        'django.core.mail.backends.smtp.EmailBackend'
+        if email_host
+        else 'django.core.mail.backends.console.EmailBackend'
+    ),
+)
+EMAIL_HOST = email_host
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'true').lower() == 'true'
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'false').lower() == 'true'
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Paradise Kiss <no-reply@localhost>')
+INVENTORY_EMAIL_NOTIFICATIONS_ENABLED = (
+    os.getenv('INVENTORY_EMAIL_NOTIFICATIONS_ENABLED', 'true').lower() == 'true'
+)
+INVENTORY_EMAIL_SUBJECT_PREFIX = os.getenv(
+    'INVENTORY_EMAIL_SUBJECT_PREFIX',
+    '[Paradise Kiss Lager]',
+)
 
 PASSWORD_RESET_TIMEOUT = int(os.getenv('PASSWORD_RESET_TIMEOUT', '86400'))
 

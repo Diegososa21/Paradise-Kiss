@@ -1,5 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core import mail
+from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -18,9 +20,17 @@ class ResourceApiTests(APITestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
             username='sosa.diego',
+            email='diego@example.com',
             password='A-secure-test-password-2026!',
         )
-        self.user.groups.add(Group.objects.create(name='team'))
+        self.team_group = Group.objects.create(name='team')
+        self.user.groups.add(self.team_group)
+        self.teammate = get_user_model().objects.create_user(
+            username='friedrich.nico',
+            email='nico@example.com',
+            password='A-secure-test-password-2026!',
+        )
+        self.teammate.groups.add(self.team_group)
         self.client.force_authenticate(user=self.user)
         self.category = Category.objects.create(name='Jackets')
         self.gender = Gender.objects.create(name='Unisex')
@@ -305,3 +315,49 @@ class ResourceApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        INVENTORY_EMAIL_NOTIFICATIONS_ENABLED=True,
+        DEFAULT_FROM_EMAIL='lager@example.com',
+    )
+    def test_notifies_every_team_email_after_inventory_changes(self):
+        mail.outbox.clear()
+        resource = resources.objects.create(**self.resource_data)
+
+        with self.captureOnCommitCallbacks(execute=True):
+            sale_response = self.client.post(
+                f'/tables/resources/{resource.id}/sell/',
+                {'quantity': 1},
+                format='json',
+            )
+        with self.captureOnCommitCallbacks(execute=True):
+            restock_response = self.client.post(
+                f'/tables/resources/{resource.id}/restock/',
+                {'quantity': 2, 'purchase_date': '2026-10-06'},
+                format='json',
+            )
+        with self.captureOnCommitCallbacks(execute=True):
+            update_response = self.client.patch(
+                f'/tables/resources/{resource.id}/inventory-settings/',
+                {'reorder_threshold': 10},
+                format='json',
+            )
+        with self.captureOnCommitCallbacks(execute=True):
+            delete_response = self.client.delete(f'/tables/resources/{resource.id}/')
+
+        self.assertEqual(sale_response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(restock_response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(update_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(mail.outbox), 8)
+        self.assertEqual(
+            {message.to[0] for message in mail.outbox},
+            {'diego@example.com', 'nico@example.com'},
+        )
+        subjects = [message.subject for message in mail.outbox]
+        self.assertTrue(any('Verkauf gebucht' in subject for subject in subjects))
+        self.assertTrue(any('Nachbestellung gebucht' in subject for subject in subjects))
+        self.assertTrue(any('Artikel aktualisiert' in subject for subject in subjects))
+        self.assertTrue(any('Artikel gelöscht' in subject for subject in subjects))
+        self.assertIn('Ausgeführt von: sosa.diego', mail.outbox[0].body)
