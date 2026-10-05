@@ -34,3 +34,13 @@ export interface Manufacturer {
   name: string;
   location: string;
 }
+
+export interface SalesData {
+  id: number;
+  year: number;
+  quarter: number;
+  category: number;
+  category_name: string;
+  units_sold: number;
+  revenue: string;
+}

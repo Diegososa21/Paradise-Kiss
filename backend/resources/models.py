@@ -32,3 +32,27 @@ class resources(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class SalesData(models.Model):
+    year = models.PositiveSmallIntegerField()
+    quarter = models.PositiveSmallIntegerField()
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='sales_data')
+    units_sold = models.PositiveIntegerField()
+    revenue = models.DecimalField(max_digits=12, decimal_places=2)
+
+    class Meta:
+        ordering = ['year', 'quarter', 'category__name']
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(quarter__gte=1, quarter__lte=4),
+                name='sales_quarter_between_1_and_4',
+            ),
+            models.UniqueConstraint(
+                fields=['year', 'quarter', 'category'],
+                name='unique_sales_period_category',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.category} · {self.year} Q{self.quarter}'

@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
-import { Resource } from '../models/resource.model';
+import { Resource, SalesData } from '../models/resource.model';
 import { AuthService } from '../services/auth.service';
 import { ResourceService } from '../services/resource.service';
 import { HomeComponent } from './home';
@@ -43,6 +43,36 @@ describe('HomeComponent', () => {
     },
   ];
 
+  const salesData: SalesData[] = [
+    {
+      id: 1,
+      year: 2024,
+      quarter: 4,
+      category: 1,
+      category_name: 'Tees',
+      units_sold: 80,
+      revenue: '2240.00',
+    },
+    {
+      id: 2,
+      year: 2025,
+      quarter: 1,
+      category: 1,
+      category_name: 'Tees',
+      units_sold: 90,
+      revenue: '2520.00',
+    },
+    {
+      id: 3,
+      year: 2025,
+      quarter: 1,
+      category: 2,
+      category_name: 'Jackets',
+      units_sold: 50,
+      revenue: '6000.00',
+    },
+  ];
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [HomeComponent],
@@ -50,7 +80,10 @@ describe('HomeComponent', () => {
         provideRouter([]),
         {
           provide: ResourceService,
-          useValue: { getAll: () => of(resources) },
+          useValue: {
+            getAll: () => of(resources),
+            getSalesData: () => of(salesData),
+          },
         },
         {
           provide: AuthService,
@@ -92,5 +125,18 @@ describe('HomeComponent', () => {
     expect(content).toContain('Tees');
     expect(content).toContain('Paradise Kiss');
     expect(content).toContain('Unisex');
+  });
+
+  it('shows sales KPIs and diagrams returned by the backend', () => {
+    const content = fixture.nativeElement.textContent;
+    const bars = fixture.nativeElement.querySelectorAll('.sales-column');
+    const categoryRows = fixture.nativeElement.querySelectorAll('.sales-category-list > li');
+
+    expect(content).toContain('Verkaufsdaten');
+    expect(content).toContain('2025');
+    expect(content).toContain('Jackets');
+    expect(content).toContain('140');
+    expect(bars).toHaveLength(2);
+    expect(categoryRows).toHaveLength(2);
   });
 });

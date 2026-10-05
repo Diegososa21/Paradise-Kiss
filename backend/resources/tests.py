@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .models import Category, Gender, Manufacturer, resources
+from .models import Category, Gender, Manufacturer, SalesData, resources
 
 
 class ResourceApiTests(APITestCase):
@@ -83,3 +83,34 @@ class ResourceApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_lists_quarterly_sales_data(self):
+        SalesData.objects.create(
+            year=2025,
+            quarter=4,
+            category=self.category,
+            units_sold=86,
+            revenue='6708.00',
+        )
+
+        response = self.client.get('/tables/sales/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['category_name'], 'Jackets')
+        self.assertEqual(response.data[0]['units_sold'], 86)
+
+    def test_sales_data_is_read_only(self):
+        response = self.client.post(
+            '/tables/sales/',
+            {
+                'year': 2025,
+                'quarter': 4,
+                'category': self.category.id,
+                'units_sold': 86,
+                'revenue': '6708.00',
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
