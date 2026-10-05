@@ -18,6 +18,14 @@ class Command(BaseCommand):
             dest='usernames',
             help='Generate a link for one approved username. May be repeated.',
         )
+        parser.add_argument(
+            '--reset',
+            action='store_true',
+            help=(
+                'Invalidate the current password of the given usernames so they can '
+                'choose a new one with the link. Requires --username.'
+            ),
+        )
 
     def handle(self, *args, **options):
         User = get_user_model()
@@ -28,6 +36,9 @@ class Command(BaseCommand):
                 groups__name=TEAM_GROUP_NAME,
             ).distinct()
         }
+        if options['reset'] and not options['usernames']:
+            raise CommandError('--reset requires at least one --username.')
+
         requested = options['usernames'] or sorted(team_users)
         requested = [username.strip().lower() for username in requested]
         invalid = set(requested) - set(team_users)
@@ -36,6 +47,10 @@ class Command(BaseCommand):
 
         for username in requested:
             user = team_users[username]
+
+            if options['reset'] and user.has_usable_password():
+                user.set_unusable_password()
+                user.save(update_fields=['password'])
 
             if user.has_usable_password():
                 self.stdout.write(self.style.WARNING(f'{username}: already activated'))

@@ -4,7 +4,7 @@ from io import StringIO
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.tokens import default_token_generator
-from django.core.management import call_command
+from django.core.management import CommandError, call_command
 from django.test import Client, TestCase
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -161,3 +161,27 @@ class TeamSetupCommandTests(TestCase):
 
         self.assertIn('Shared Supabase connection: OK', output.getvalue())
         self.assertIn('tebben.fabian=ready', output.getvalue())
+
+
+class ActivationLinksCommandTests(TestCase):
+    def test_reset_lets_an_activated_user_choose_a_new_password(self):
+        user = get_user_model().objects.create_user(
+            username='sosa.diego',
+            password='A-forgotten-password-2026!',
+        )
+        user.groups.add(Group.objects.create(name='team'))
+
+        skipped = StringIO()
+        call_command('activation_links', '--username', 'sosa.diego', stdout=skipped)
+        self.assertIn('already activated', skipped.getvalue())
+
+        output = StringIO()
+        call_command('activation_links', '--username', 'sosa.diego', '--reset', stdout=output)
+
+        user.refresh_from_db()
+        self.assertFalse(user.has_usable_password())
+        self.assertIn('activate_token=', output.getvalue())
+
+    def test_reset_requires_a_username(self):
+        with self.assertRaises(CommandError):
+            call_command('activation_links', '--reset', stdout=StringIO())

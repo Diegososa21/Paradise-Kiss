@@ -98,6 +98,22 @@ Después de la activación, en otra laptop no se vuelve a usar el enlace. Se abr
 `http://localhost:4200/` y se inicia sesión con `sosa.diego`, `friedrich.nico` o
 `tebben.fabian` y la contraseña personal configurada.
 
+### Contraseña olvidada
+
+Si alguien olvidó su contraseña, el administrador genera un enlace nuevo. Esto
+invalida la contraseña anterior y permite elegir una nueva con el enlace:
+
+```bash
+python manage.py activation_links --username friedrich.nico --reset
+```
+
+Quien tiene acceso a la terminal con el `backend/.env` compartido también puede
+cambiarla directamente:
+
+```bash
+python manage.py changepassword sosa.diego
+```
+
 ### Frontend
 
 ```bash
