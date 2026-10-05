@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
 
 from resources.models import resources
+from resources.permissions import TEAM_GROUP_NAME
 
 
 PLACEHOLDER_VALUES = {
@@ -33,8 +34,9 @@ class Command(BaseCommand):
             connection.ensure_connection()
             product_count = resources.objects.count()
             users = get_user_model().objects.filter(
-                username__in=settings.APP_ALLOWED_USERNAMES,
-            )
+                is_active=True,
+                groups__name=TEAM_GROUP_NAME,
+            ).distinct()
         except Exception as error:
             raise CommandError(
                 'The shared Supabase database is not reachable. Check the '
@@ -46,13 +48,8 @@ class Command(BaseCommand):
             status = 'ready' if user.has_usable_password() else 'pending activation'
             user_statuses.append(f'{user.username}={status}')
 
-        missing_users = settings.APP_ALLOWED_USERNAMES - {
-            user.username.lower() for user in users
-        }
-        if missing_users:
-            raise CommandError(
-                f'Missing approved users: {", ".join(sorted(missing_users))}'
-            )
+        if not user_statuses:
+            raise CommandError('No active users belong to the team group.')
 
         self.stdout.write(self.style.SUCCESS('Shared Supabase connection: OK'))
         self.stdout.write(f'Products visible: {product_count}')

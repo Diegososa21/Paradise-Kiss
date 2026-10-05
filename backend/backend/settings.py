@@ -188,11 +188,6 @@ SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_SECURE_HSTS_SECONDS', '0'))
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-APP_ALLOWED_USERNAMES = {
-    username.strip().lower()
-    for username in os.getenv('APP_ALLOWED_USERNAMES', 'diego,nico,fabian').split(',')
-    if username.strip()
-}
 PASSWORD_RESET_TIMEOUT = int(os.getenv('PASSWORD_RESET_TIMEOUT', '86400'))
 
 CSRF_COOKIE_NAME = 'XSRF-TOKEN'

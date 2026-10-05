@@ -71,9 +71,10 @@ los tres usuarios; el servidor ya no cambia silenciosamente a una SQLite vacía.
 
 ### Primera contraseña del equipo
 
-Los usuarios `diego`, `nico` y `fabian` se activan mediante enlaces firmados de
-un solo uso. El administrador genera los enlaces en su terminal y envía cada uno
-por un canal privado:
+Los usuarios `sosa.diego`, `friedrich.nico` y `tebben.fabian` pertenecen al
+grupo Django `team` y se activan mediante enlaces firmados de un solo uso. El
+administrador genera los enlaces en su terminal y envía cada uno por un canal
+privado:
 
 ```bash
 cd backend
@@ -85,8 +86,8 @@ Cada enlace caduca en 24 horas y deja de funcionar inmediatamente después de
 crear la contraseña. No publiques estos enlaces ni los guardes en Git.
 
 Después de la activación, en otra laptop no se vuelve a usar el enlace. Se abre
-`http://localhost:4200/` y se inicia sesión con `diego`, `nico` o `fabian` y la
-contraseña personal configurada.
+`http://localhost:4200/` y se inicia sesión con `sosa.diego`, `friedrich.nico` o
+`tebben.fabian` y la contraseña personal configurada.
 
 ### Frontend
 
@@ -109,7 +110,6 @@ estas variables de entorno:
 - `DJANGO_ALLOWED_HOSTS`
 - `DJANGO_CORS_ALLOWED_ORIGINS`
 - `DJANGO_CSRF_TRUSTED_ORIGINS`
-- `APP_ALLOWED_USERNAMES=diego,nico,fabian`
 - `FRONTEND_URL`
 - `DB_POOL_MODE=transaction`
 - `DB_CONN_MAX_AGE=0`

@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -8,9 +9,10 @@ from .models import Category, Gender, Manufacturer, SalesData, resources
 class ResourceApiTests(APITestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
-            username='diego',
+            username='sosa.diego',
             password='A-secure-test-password-2026!',
         )
+        self.user.groups.add(Group.objects.create(name='team'))
         self.client.force_authenticate(user=self.user)
         self.category = Category.objects.create(name='Jackets')
         self.gender = Gender.objects.create(name='Unisex')

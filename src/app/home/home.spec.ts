@@ -90,7 +90,7 @@ describe('HomeComponent', () => {
           useValue: {
             user: signal({
               id: 1,
-              username: 'diego',
+              username: 'sosa.diego',
               display_name: 'Diego Sosa',
               email: 'diego@example.com',
               avatar_url: '/profiles/diego.jpeg',

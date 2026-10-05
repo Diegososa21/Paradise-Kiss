@@ -1,5 +1,16 @@
-from django.conf import settings
 from rest_framework.permissions import BasePermission
+
+
+TEAM_GROUP_NAME = 'team'
+
+
+def is_approved_app_user(user):
+    return bool(
+        user
+        and user.is_authenticated
+        and user.is_active
+        and user.groups.filter(name=TEAM_GROUP_NAME).exists()
+    )
 
 
 class IsApprovedAppUser(BasePermission):
@@ -8,10 +19,4 @@ class IsApprovedAppUser(BasePermission):
     message = 'A valid Paradise Kiss team session is required.'
 
     def has_permission(self, request, view):
-        user = request.user
-        return bool(
-            user
-            and user.is_authenticated
-            and user.is_active
-            and user.username.lower() in settings.APP_ALLOWED_USERNAMES
-        )
+        return is_approved_app_user(request.user)

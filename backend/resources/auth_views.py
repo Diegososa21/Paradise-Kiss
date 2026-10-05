@@ -12,22 +12,16 @@ from django.utils.http import urlsafe_base64_decode
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
 
+from .permissions import is_approved_app_user
+
 
 User = get_user_model()
 
 AVATAR_URLS = {
-    'diego': '/profiles/diego.jpeg',
-    'nico': '/profiles/nico.jpeg',
-    'fabian': '/profiles/fabian.jpeg',
+    'sosa.diego': '/profiles/diego.jpeg',
+    'friedrich.nico': '/profiles/nico.jpeg',
+    'tebben.fabian': '/profiles/fabian.jpeg',
 }
-
-
-def _is_approved(user):
-    return bool(
-        user
-        and user.is_active
-        and user.groups.filter(name='team').exists()
-    )
 
 
 def _serialize_user(user):
@@ -57,7 +51,7 @@ def csrf(request):
 
 @require_GET
 def session(request):
-    if request.user.is_authenticated and _is_approved(request.user):
+    if is_approved_app_user(request.user):
         return JsonResponse({'authenticated': True, 'user': _serialize_user(request.user)})
 
     return JsonResponse({'authenticated': False, 'user': None})
@@ -80,7 +74,7 @@ def sign_in(request):
         username=existing_user.username if existing_user else username,
         password=password,
     )
-    if not _is_approved(user):
+    if not is_approved_app_user(user):
         return JsonResponse({'detail': 'Benutzername oder Passwort ist falsch.'}, status=400)
 
     login(request, user)
@@ -108,7 +102,7 @@ def activate(request):
         user = None
 
     if (
-        not _is_approved(user)
+        not is_approved_app_user(user)
         or user.has_usable_password()
         or not default_token_generator.check_token(user, token)
     ):

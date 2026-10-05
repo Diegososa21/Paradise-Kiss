@@ -2,6 +2,7 @@ import json
 from io import StringIO
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.contrib.auth.tokens import default_token_generator
 from django.core.management import call_command
 from django.test import Client, TestCase
@@ -12,6 +13,11 @@ from django.utils.http import urlsafe_base64_encode
 class AuthApiTests(TestCase):
     def setUp(self):
         self.client = Client(enforce_csrf_checks=True)
+        self.team_group = Group.objects.create(name='team')
+
+    def add_to_team(self, user):
+        user.groups.add(self.team_group)
+        return user
 
     def csrf_token(self):
         response = self.client.get('/auth/csrf/')
@@ -45,20 +51,24 @@ class AuthApiTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_approved_user_can_login_and_logout(self):
-        get_user_model().objects.create_user(
-            username='diego',
-            first_name='Diego',
-            password='A-secure-test-password-2026!',
+        self.add_to_team(
+            get_user_model().objects.create_user(
+                username='sosa.diego',
+                first_name='Diego',
+                password='A-secure-test-password-2026!',
+            )
         )
 
         response = self.post_json(
             '/auth/login/',
-            {'username': 'diego', 'password': 'A-secure-test-password-2026!'},
+            {'username': 'sosa.diego', 'password': 'A-secure-test-password-2026!'},
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()['authenticated'])
         self.assertEqual(response.json()['user']['display_name'], 'Diego')
+        self.assertEqual(response.json()['user']['username'], 'sosa.diego')
+        self.assertEqual(response.json()['user']['avatar_url'], '/profiles/diego.jpeg')
 
         response = self.post_json('/auth/logout/', {})
         self.assertEqual(response.status_code, 200)
@@ -80,7 +90,9 @@ class AuthApiTests(TestCase):
         self.assertFalse('_auth_user_id' in self.client.session)
 
     def test_activation_link_sets_first_password_and_logs_user_in(self):
-        user = get_user_model().objects.create_user(username='nico', first_name='Nico')
+        user = self.add_to_team(
+            get_user_model().objects.create_user(username='friedrich.nico', first_name='Nico')
+        )
         user.set_unusable_password()
         user.save(update_fields=['password'])
         uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -113,7 +125,9 @@ class AuthApiTests(TestCase):
         self.assertEqual(reused.status_code, 400)
 
     def test_activation_rejects_weak_passwords(self):
-        user = get_user_model().objects.create_user(username='fabian')
+        user = self.add_to_team(
+            get_user_model().objects.create_user(username='tebben.fabian')
+        )
         user.set_unusable_password()
         user.save(update_fields=['password'])
 
@@ -134,14 +148,16 @@ class AuthApiTests(TestCase):
 class TeamSetupCommandTests(TestCase):
     def test_reports_shared_team_users(self):
         User = get_user_model()
-        for username in ('diego', 'nico', 'fabian'):
-            User.objects.create_user(
+        team_group = Group.objects.create(name='team')
+        for username in ('sosa.diego', 'friedrich.nico', 'tebben.fabian'):
+            user = User.objects.create_user(
                 username=username,
                 password='A-secure-test-password-2026!',
             )
+            user.groups.add(team_group)
 
         output = StringIO()
         call_command('check_team_setup', stdout=output)
 
         self.assertIn('Shared Supabase connection: OK', output.getvalue())
-        self.assertIn('fabian=ready', output.getvalue())
+        self.assertIn('tebben.fabian=ready', output.getvalue())
