@@ -1,17 +1,22 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "experimentalServices": {
+  "services": {
     "frontend": {
-      "entrypoint": ".",
-      "routePrefix": "/"
+      "root": ".",
+      "framework": "angular",
+      "buildCommand": "npm run build",
+      "outputDirectory": "dist/paradise-kiss/browser",
+      "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
     },
     "api": {
-      "entrypoint": "backend/backend/wsgi.py",
-      "routePrefix": "/api",
-      "maxDuration": 30,
-      "includeFiles": [
-        "backend/**"
-      ]
+      "root": "backend",
+      "framework": "django",
+      "entrypoint": "backend/wsgi.py",
+      "rewrites": [{ "source": "/api/:path(.*)?", "destination": "/:path" }]
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": { "service": "api" } },
+    { "source": "/(.*)", "destination": { "service": "frontend" } }
+  ]
 }

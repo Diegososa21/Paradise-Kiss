@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import dj_database_url
 from dotenv import load_dotenv
@@ -22,7 +23,10 @@ ALLOWED_HOSTS = [
     if host.strip()
 ]
 
-for vercel_host_variable in ('VERCEL_URL', 'VERCEL_PROJECT_PRODUCTION_URL'):
+# Hostnames Vercel assigns to a deployment, its branch alias and the production domain.
+VERCEL_HOST_VARIABLES = ('VERCEL_URL', 'VERCEL_BRANCH_URL', 'VERCEL_PROJECT_PRODUCTION_URL')
+
+for vercel_host_variable in VERCEL_HOST_VARIABLES:
     vercel_host = os.getenv(vercel_host_variable)
     if vercel_host and vercel_host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(vercel_host)
@@ -69,7 +73,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-database_url = os.getenv('DATABASE_URL')
+# Connection parameters libpq/psycopg understands. The Supabase-Vercel integration
+# adds its own query parameters (for example "supa=..."), which psycopg rejects.
+LIBPQ_QUERY_PARAMETERS = {'sslmode', 'sslrootcert', 'connect_timeout', 'application_name'}
+
+
+def vercel_postgres_url():
+    """POSTGRES_URL from the Supabase integration on Vercel, cleaned for psycopg."""
+    url = os.getenv('POSTGRES_URL')
+    if not url:
+        return None
+    parts = urlsplit(url)
+    query = [
+        (key, value)
+        for key, value in parse_qsl(parts.query)
+        if key in LIBPQ_QUERY_PARAMETERS
+    ]
+    return urlunsplit(parts._replace(query=urlencode(query)))
+
+
+database_url = os.getenv('DATABASE_URL') or vercel_postgres_url()
 database_name = os.getenv('DB_NAME') or os.getenv('DB_Name')
 database_user = os.getenv('DB_USER')
 database_password = os.getenv('DB_PASSWORD') or os.getenv('DB_Password')
@@ -169,7 +192,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 frontend_origins = [FRONTEND_URL]
-for vercel_host_variable in ('VERCEL_URL', 'VERCEL_PROJECT_PRODUCTION_URL'):
+for vercel_host_variable in VERCEL_HOST_VARIABLES:
     vercel_host = os.getenv(vercel_host_variable)
     if vercel_host:
         frontend_origins.append(f'https://{vercel_host}')
