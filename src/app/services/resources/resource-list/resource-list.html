@@ -6,8 +6,8 @@
       <div>
         <a class="back-link" routerLink="/inventory">← Zurück zur Produktübersicht</a>
         <span class="eyebrow">BESTAND VERWALTEN</span>
-        <h1>Artikel & Verkäufe</h1>
-        <p>Verkäufe buchen, Restbestand kontrollieren oder Artikel entfernen.</p>
+        <h1>Bestand verwalten</h1>
+        <p>Nachbestellungen, Lagerplätze, Verkäufe und Restbestände kontrollieren.</p>
       </div>
       <a class="add-button" routerLink="/resources/new">+ Neuer Artikel</a>
     </header>
@@ -25,6 +25,11 @@
         <article>
           <span>Einheiten im Lager</span>
           <strong>{{ totalStock() }}</strong>
+        </article>
+        <article>
+          <span>Niedriger Bestand</span>
+          <strong>{{ lowStockCount() }}</strong>
+          <small>Meldeschwelle erreicht</small>
         </article>
         <article>
           <span>Registrierte Verkäufe</span>
@@ -55,7 +60,13 @@
                     <h3>{{ resource.name }}</h3>
                     <p>{{ resource.desc }}</p>
                   </div>
-                  <div class="stock-badge" [class.stock-badge--empty]="resource.amount === 0">
+                  <div
+                    class="stock-badge"
+                    [class.stock-badge--empty]="resource.amount === 0"
+                    [class.stock-badge--low]="
+                      resource.amount > 0 && resource.amount <= resource.reorder_threshold
+                    "
+                  >
                     <strong>{{ resource.amount }}</strong>
                     <span>verfügbar</span>
                   </div>
@@ -78,10 +89,31 @@
                     <dt>Geschlecht</dt>
                     <dd>{{ resource.gender_name }}</dd>
                   </div>
+                  <div>
+                    <dt>Regal</dt>
+                    <dd>{{ resource.shelf_number || '—' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Fach</dt>
+                    <dd>{{ resource.bin_number || '—' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Letzter Einkauf</dt>
+                    <dd>
+                      {{
+                        resource.purchase_date ? (resource.purchase_date | date: 'dd.MM.yyyy') : '—'
+                      }}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Meldeschwelle</dt>
+                    <dd>{{ resource.reorder_threshold }} Stück</dd>
+                  </div>
                 </dl>
 
-                <div class="sale-controls">
-                  <label [for]="'sale-quantity-' + resource.id">Verkaufsmenge</label>
+                <div class="movement-controls sale-controls">
+                  <strong>Verkauf</strong>
+                  <label [for]="'sale-quantity-' + resource.id">Menge</label>
                   <div>
                     <input
                       [id]="'sale-quantity-' + resource.id"
@@ -102,6 +134,93 @@
                       {{ busyResourceId() === resource.id ? 'Wird gebucht…' : 'Verkauf buchen' }}
                     </button>
                   </div>
+                </div>
+
+                <div class="movement-controls restock-controls">
+                  <strong>Nachbestellung</strong>
+                  <div class="restock-grid">
+                    <label>
+                      Menge
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        [ngModel]="restockQuantities()[resource.id]"
+                        (ngModelChange)="setRestockQuantity(resource.id, $event)"
+                        [disabled]="busyResourceId() === resource.id"
+                      />
+                    </label>
+                    <label>
+                      Einkaufsdatum
+                      <input
+                        type="date"
+                        [ngModel]="restockDates()[resource.id]"
+                        (ngModelChange)="setRestockDate(resource.id, $event)"
+                        [disabled]="busyResourceId() === resource.id"
+                      />
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    class="restock-button"
+                    (click)="restock(resource)"
+                    [disabled]="busyResourceId() !== null"
+                  >
+                    {{
+                      busyResourceId() === resource.id ? 'Wird gebucht…' : 'Nachbestellung buchen'
+                    }}
+                  </button>
+                </div>
+
+                <div class="movement-controls settings-controls">
+                  <strong>Lagereinstellungen</strong>
+                  <div class="settings-grid">
+                    <label>
+                      Regalnummer
+                      <input
+                        type="text"
+                        maxlength="30"
+                        [ngModel]="restockShelves()[resource.id]"
+                        (ngModelChange)="setRestockShelf(resource.id, $event)"
+                        placeholder="R-02"
+                        [disabled]="busyResourceId() === resource.id"
+                      />
+                    </label>
+                    <label>
+                      Fachnummer
+                      <input
+                        type="text"
+                        maxlength="30"
+                        [ngModel]="restockBins()[resource.id]"
+                        (ngModelChange)="setRestockBin(resource.id, $event)"
+                        placeholder="F-04"
+                        [disabled]="busyResourceId() === resource.id"
+                      />
+                    </label>
+                    <label>
+                      Meldebestand
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        [ngModel]="reorderThresholds()[resource.id]"
+                        (ngModelChange)="setReorderThreshold(resource.id, $event)"
+                        [disabled]="busyResourceId() === resource.id"
+                      />
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    class="settings-button"
+                    (click)="saveInventorySettings(resource)"
+                    [disabled]="busyResourceId() !== null"
+                  >
+                    {{
+                      busyResourceId() === resource.id
+                        ? 'Wird gespeichert…'
+                        : 'Lagerdaten speichern'
+                    }}
+                  </button>
                 </div>
 
                 @if (rowMessages()[resource.id]) {
@@ -131,29 +250,35 @@
           </div>
         </section>
 
-        <aside class="sales-panel" aria-labelledby="recent-sales-title">
+        <aside class="sales-panel" aria-labelledby="recent-movements-title">
           <header>
             <span class="eyebrow">AKTIVITÄT</span>
-            <h2 id="recent-sales-title">Letzte Verkäufe</h2>
+            <h2 id="recent-movements-title">Lagerbewegungen</h2>
           </header>
 
-          @if (salesLoading()) {
-            <p class="empty-state">Verkaufshistorie wird geladen…</p>
-          } @else if (salesError()) {
-            <p class="empty-state empty-state--error" role="alert">{{ salesError() }}</p>
-          } @else if (recentSales().length === 0) {
-            <p class="empty-state">Noch keine Verkäufe registriert.</p>
+          @if (movementsLoading()) {
+            <p class="empty-state">Lagerbewegungen werden geladen…</p>
+          } @else if (movementsError()) {
+            <p class="empty-state empty-state--error" role="alert">{{ movementsError() }}</p>
+          } @else if (recentMovements().length === 0) {
+            <p class="empty-state">Noch keine Lagerbewegungen registriert.</p>
           }
 
           <ol>
-            @for (sale of recentSales(); track sale.id) {
+            @for (movement of recentMovements(); track movement.id) {
               <li>
-                <span class="sale-quantity">−{{ sale.quantity }}</span>
+                <span
+                  class="sale-quantity"
+                  [class.sale-quantity--restock]="movement.movement_type === 'restock'"
+                >
+                  {{ movement.movement_type === 'restock' ? '+' : '−' }}{{ movement.quantity }}
+                </span>
                 <div>
-                  <strong>{{ sale.resource_name }}</strong>
-                  <span>{{ sale.stock_before }} → {{ sale.stock_after }} Stück</span>
+                  <strong>{{ movement.resource_name }}</strong>
+                  <span>{{ movement.stock_before }} → {{ movement.stock_after }} Stück</span>
                   <small>
-                    {{ sale.sold_by_username }} · {{ sale.sold_at | date: 'dd.MM.yyyy HH:mm' }}
+                    {{ movement.movement_type_label }} · {{ movement.performed_by_username }} ·
+                    {{ movement.occurred_at | date: 'dd.MM.yyyy HH:mm' }}
                   </small>
                 </div>
               </li>

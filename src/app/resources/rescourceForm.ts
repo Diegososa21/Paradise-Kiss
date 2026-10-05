@@ -17,6 +17,7 @@ import { UserSessionComponent } from '../shared/user-session/user-session';
 export class RescourceFormComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly resourceService = inject(ResourceService);
+  private readonly today = new Intl.DateTimeFormat('sv-SE').format(new Date());
 
   protected readonly form = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(200)]],
@@ -27,6 +28,10 @@ export class RescourceFormComponent implements OnInit {
     manufacturer: [0, [Validators.required, Validators.min(1)]],
     material: ['', [Validators.required, Validators.maxLength(200)]],
     gender: [0, [Validators.required, Validators.min(1)]],
+    shelf_number: ['', [Validators.required, Validators.maxLength(30)]],
+    bin_number: ['', [Validators.required, Validators.maxLength(30)]],
+    reorder_threshold: [5, [Validators.required, Validators.min(0)]],
+    purchase_date: [this.today, Validators.required],
   });
 
   protected categories: Category[] = [];
@@ -78,7 +83,7 @@ export class RescourceFormComponent implements OnInit {
       .subscribe({
         next: () => {
           this.successMessage = 'Der Eintrag wurde gespeichert.';
-          this.form.reset({ amount: 0, category: 0, manufacturer: 0, gender: 0 });
+          this.resetFormValues();
         },
         error: () => {
           this.errorMessage = 'Der Eintrag konnte nicht gespeichert werden.';
@@ -89,6 +94,17 @@ export class RescourceFormComponent implements OnInit {
   protected resetForm(): void {
     this.successMessage = '';
     this.errorMessage = '';
-    this.form.reset({ amount: 0, category: 0, manufacturer: 0, gender: 0 });
+    this.resetFormValues();
+  }
+
+  private resetFormValues(): void {
+    this.form.reset({
+      amount: 0,
+      category: 0,
+      manufacturer: 0,
+      gender: 0,
+      reorder_threshold: 5,
+      purchase_date: this.today,
+    });
   }
 }

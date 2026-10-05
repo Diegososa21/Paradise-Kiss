@@ -24,6 +24,10 @@ describe('InventoryComponent', () => {
       manufacturer_name: 'Paradise Textiles',
       gender: 1,
       gender_name: 'Unisex',
+      shelf_number: 'R-02',
+      bin_number: 'F-04',
+      reorder_threshold: 5,
+      purchase_date: '2026-10-01',
       created_at: '2026-10-05T08:00:00Z',
     },
     {
@@ -39,6 +43,10 @@ describe('InventoryComponent', () => {
       manufacturer_name: 'Paradise Textiles',
       gender: 2,
       gender_name: 'Women',
+      shelf_number: 'R-03',
+      bin_number: 'F-01',
+      reorder_threshold: 5,
+      purchase_date: '2026-10-02',
       created_at: '2026-10-05T09:00:00Z',
     },
   ];
@@ -68,6 +76,7 @@ describe('InventoryComponent', () => {
     expect(content).toContain('Denim Jacket');
     expect(content).toContain('White Tee');
     expect(content).toContain('16');
-    expect(content).toContain('5 Einheiten oder weniger');
+    expect(content).toContain('individuelle Meldeschwelle erreicht');
+    expect(content).toContain('R-02 / F-04');
   });
 });

@@ -11,6 +11,10 @@ export interface Resource {
   manufacturer_name: string;
   gender: number;
   gender_name: string;
+  shelf_number: string;
+  bin_number: string;
+  reorder_threshold: number;
+  purchase_date: string | null;
   created_at: string;
 }
 
@@ -61,4 +65,38 @@ export interface InventorySale {
 export interface SellResourceResponse {
   resource: Resource;
   sale: InventorySale;
+  movement: StockMovement;
+}
+
+export interface StockMovement {
+  id: number;
+  resource: number | null;
+  resource_name: string;
+  movement_type: 'sale' | 'restock';
+  movement_type_label: string;
+  quantity: number;
+  stock_before: number;
+  stock_after: number;
+  purchase_date: string | null;
+  performed_by: number | null;
+  performed_by_username: string;
+  occurred_at: string;
+}
+
+export interface RestockResource {
+  quantity: number;
+  purchase_date?: string;
+  shelf_number?: string;
+  bin_number?: string;
+}
+
+export interface RestockResourceResponse {
+  resource: Resource;
+  movement: StockMovement;
+}
+
+export interface InventorySettings {
+  shelf_number?: string;
+  bin_number?: string;
+  reorder_threshold?: number;
 }

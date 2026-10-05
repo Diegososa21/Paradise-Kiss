@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -9,7 +10,7 @@ import { UserSessionComponent } from '../shared/user-session/user-session';
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [RouterLink, NavigationSidebarComponent, UserSessionComponent],
+  imports: [DatePipe, RouterLink, NavigationSidebarComponent, UserSessionComponent],
   templateUrl: './inventory.html',
   styleUrl: './inventory.scss',
 })
@@ -28,7 +29,8 @@ export class InventoryComponent implements OnInit {
     this.resources().reduce((total, resource) => total + resource.amount, 0),
   );
   protected readonly lowStockCount = computed(
-    () => this.resources().filter((resource) => resource.amount <= 5).length,
+    () =>
+      this.resources().filter((resource) => resource.amount <= resource.reorder_threshold).length,
   );
 
   ngOnInit(): void {

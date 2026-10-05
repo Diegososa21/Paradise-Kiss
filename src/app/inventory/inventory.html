@@ -29,7 +29,7 @@
       <article>
         <span>Niedriger Bestand</span>
         <strong>{{ loading() ? '…' : lowStockCount() }}</strong>
-        <small>5 Einheiten oder weniger</small>
+        <small>individuelle Meldeschwelle erreicht</small>
       </article>
     </section>
 
@@ -51,21 +51,23 @@
               <th scope="col">Geschlecht</th>
               <th scope="col">Größe</th>
               <th scope="col">Bestand</th>
+              <th scope="col">Lagerplatz</th>
+              <th scope="col">Einkauf</th>
               <th scope="col">Hersteller</th>
             </tr>
           </thead>
           <tbody>
             @if (loading()) {
               <tr class="inventory-state">
-                <td colspan="6">Produkte werden geladen…</td>
+                <td colspan="8">Produkte werden geladen…</td>
               </tr>
             } @else if (error()) {
               <tr class="inventory-state inventory-state--error">
-                <td colspan="6">{{ error() }}</td>
+                <td colspan="8">{{ error() }}</td>
               </tr>
             } @else if (sortedResources().length === 0) {
               <tr class="inventory-state">
-                <td colspan="6">Noch keine Produkte vorhanden.</td>
+                <td colspan="8">Noch keine Produkte vorhanden.</td>
               </tr>
             }
 
@@ -86,8 +88,18 @@
                   <span class="size-pill">{{ item.size }}</span>
                 </td>
                 <td>
-                  <span [class.low-stock]="item.amount <= 5">{{ item.amount }}</span>
+                  <span [class.low-stock]="item.amount <= item.reorder_threshold">
+                    {{ item.amount }}
+                  </span>
                 </td>
+                <td>
+                  @if (item.shelf_number || item.bin_number) {
+                    {{ item.shelf_number || '—' }} / {{ item.bin_number || '—' }}
+                  } @else {
+                    <span class="missing-location">Nicht zugeordnet</span>
+                  }
+                </td>
+                <td>{{ item.purchase_date ? (item.purchase_date | date: 'dd.MM.yyyy') : '—' }}</td>
                 <td>{{ item.manufacturer_name }}</td>
               </tr>
             }

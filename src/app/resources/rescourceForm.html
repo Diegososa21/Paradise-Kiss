@@ -63,6 +63,41 @@
             </div>
 
             <div class="form-group">
+              <label for="shelf_number">Regalnummer</label>
+              <input
+                type="text"
+                id="shelf_number"
+                formControlName="shelf_number"
+                placeholder="z. B. R-02"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="bin_number">Fachnummer</label>
+              <input
+                type="text"
+                id="bin_number"
+                formControlName="bin_number"
+                placeholder="z. B. F-04"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="purchase_date">Einkaufsdatum</label>
+              <input type="date" id="purchase_date" formControlName="purchase_date" />
+            </div>
+
+            <div class="form-group">
+              <label for="reorder_threshold">Meldeschwelle</label>
+              <input
+                type="number"
+                id="reorder_threshold"
+                formControlName="reorder_threshold"
+                min="0"
+              />
+            </div>
+
+            <div class="form-group">
               <label for="category">Kategorie</label>
               <select id="category" formControlName="category">
                 <option [ngValue]="0">Bitte auswählen</option>

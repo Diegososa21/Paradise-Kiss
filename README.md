@@ -10,7 +10,16 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 - `backend/`: API Django REST.
 - Supabase: base de datos PostgreSQL usada por Django.
 - `/api/tables/resources/`: listado y creación de prendas con nombre, descripción,
-  talla, categoría, fabricante, material y género.
+  talla, categoría, fabricante, material, género, lugar de almacén, fecha de compra
+  y umbral de reposición.
+- `/api/tables/resources/<id>/sell/`: registra una venta y descuenta el stock de
+  forma atómica.
+- `/api/tables/resources/<id>/restock/`: registra una reposición, actualiza el
+  stock y conserva el movimiento en el historial.
+- `/api/tables/resources/<id>/inventory-settings/`: modifica el estante, el
+  compartimento y el stock mínimo sin alterar la cantidad disponible.
+- `/api/tables/inventory-sales/` y `/api/tables/stock-movements/`: historial real
+  y auditable con usuario, fecha y existencias antes/después del movimiento.
 - `/api/auth/`: sesión Django protegida por CSRF para Diego, Nico y Fabian.
 
 ## Desarrollo local
@@ -98,6 +107,21 @@ npm start
 
 Abre `http://localhost:4200/`. El proxy local envía las solicitudes `/api` a
 Django en `http://127.0.0.1:8000`.
+
+Las páginas `Bestand`, `Verkäufe` y `Analyse` trabajan con las operaciones
+guardadas en PostgreSQL. Los gráficos no usan datos simulados: aparecerán y se
+actualizarán después de registrar ventas reales desde la aplicación.
+
+### Pruebas locales aisladas
+
+Para que las pruebas no escriban en Supabase, fuerza SQLite:
+
+```bash
+DJANGO_USE_SQLITE=true backend/.venv/bin/python backend/manage.py test \
+  resources.tests resources.tests_auth
+npm test -- --watch=false
+npm run build
+```
 
 ## Producción en Vercel
 
