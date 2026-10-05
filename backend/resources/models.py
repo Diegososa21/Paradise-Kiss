@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 class Manufacturer(models.Model):
@@ -30,6 +31,14 @@ class resources(models.Model):
     gender = models.ForeignKey(Gender, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(amount__gte=0),
+                name='resource_amount_non_negative',
+            ),
+        ]
+
     def __str__(self):
         return self.name
 
@@ -56,3 +65,48 @@ class SalesData(models.Model):
 
     def __str__(self):
         return f'{self.category} · {self.year} Q{self.quarter}'
+
+
+class InventorySale(models.Model):
+    resource = models.ForeignKey(
+        resources,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='inventory_sales',
+    )
+    resource_name = models.CharField(max_length=200)
+    category_name = models.CharField(max_length=200)
+    quantity = models.PositiveIntegerField()
+    stock_before = models.PositiveIntegerField()
+    stock_after = models.PositiveIntegerField()
+    sold_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='inventory_sales',
+    )
+    sold_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-sold_at']
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(quantity__gt=0),
+                name='inventory_sale_quantity_positive',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(stock_before__gte=models.F('quantity')),
+                name='inventory_sale_stock_sufficient',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    stock_after=models.F('stock_before') - models.F('quantity')
+                ),
+                name='inventory_sale_stock_consistent',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.resource_name} · {self.quantity} verkauft'

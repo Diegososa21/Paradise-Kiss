@@ -1,52 +1,157 @@
-<div class="resource-list">
-  <a class="back-link" routerLink="/">&#8592; Zurück</a>
-  <h2>Alle Einträge</h2>
+<main class="inventory-shell">
+  <header class="page-header">
+    <div>
+      <a class="back-link" routerLink="/">← Zurück zum Dashboard</a>
+      <span class="eyebrow">BESTAND VERWALTEN</span>
+      <h1>Artikel & Verkäufe</h1>
+      <p>Verkäufe buchen, Restbestand kontrollieren oder Artikel entfernen.</p>
+    </div>
+    <a class="add-button" routerLink="/resources/new">+ Neuer Artikel</a>
+  </header>
 
   @if (loading) {
-    <p>Lädt...</p>
-  }
+    <p class="page-state">Daten werden geladen…</p>
+  } @else if (error) {
+    <p class="page-state page-state--error">{{ error }}</p>
+  } @else {
+    <section class="inventory-overview" aria-label="Bestandsübersicht">
+      <article>
+        <span>Artikel</span>
+        <strong>{{ resources.length }}</strong>
+      </article>
+      <article>
+        <span>Einheiten im Lager</span>
+        <strong>{{ totalStock }}</strong>
+      </article>
+      <article>
+        <span>Registrierte Verkäufe</span>
+        <strong>{{ totalSalesCount }}</strong>
+        <small>gespeicherte Buchungen</small>
+      </article>
+    </section>
 
-  @if (error) {
-    <p class="error">{{ error }}</p>
-  }
+    <div class="content-grid">
+      <section class="product-panel" aria-labelledby="products-title">
+        <header>
+          <div>
+            <h2 id="products-title">Aktueller Bestand</h2>
+            <p>Die Menge wird direkt nach jedem Verkauf aktualisiert.</p>
+          </div>
+        </header>
 
-  @if (!loading && resources.length === 0) {
-    <p>Noch keine Einträge vorhanden.</p>
-  }
+        @if (resources.length === 0) {
+          <p class="empty-state">Noch keine Artikel vorhanden.</p>
+        }
 
-  @for (resource of resources; track resource.id) {
-    <div class="resource-card">
-      <div>
-        <strong>{{ resource.name }}</strong>
-        <p>{{ resource.desc }}</p>
-      </div>
-      <dl>
-        <div>
-          <dt>Größe</dt>
-          <dd>{{ resource.size }}</dd>
+        <div class="resource-grid">
+          @for (resource of resources; track resource.id) {
+            <article class="resource-card" [class.resource-card--empty]="resource.amount === 0">
+              <header>
+                <div>
+                  <span class="category-label">{{ resource.category_name }}</span>
+                  <h3>{{ resource.name }}</h3>
+                  <p>{{ resource.desc }}</p>
+                </div>
+                <div class="stock-badge" [class.stock-badge--empty]="resource.amount === 0">
+                  <strong>{{ resource.amount }}</strong>
+                  <span>verfügbar</span>
+                </div>
+              </header>
+
+              <dl>
+                <div>
+                  <dt>Größe</dt>
+                  <dd>{{ resource.size }}</dd>
+                </div>
+                <div>
+                  <dt>Hersteller</dt>
+                  <dd>{{ resource.manufacturer_name }}</dd>
+                </div>
+                <div>
+                  <dt>Material</dt>
+                  <dd>{{ resource.material }}</dd>
+                </div>
+                <div>
+                  <dt>Geschlecht</dt>
+                  <dd>{{ resource.gender_name }}</dd>
+                </div>
+              </dl>
+
+              <div class="sale-controls">
+                <label [for]="'sale-quantity-' + resource.id">Verkaufsmenge</label>
+                <div>
+                  <input
+                    [id]="'sale-quantity-' + resource.id"
+                    type="number"
+                    min="1"
+                    [max]="resource.amount"
+                    step="1"
+                    [(ngModel)]="saleQuantities[resource.id]"
+                    [disabled]="resource.amount === 0 || busyResourceId === resource.id"
+                  />
+                  <button
+                    type="button"
+                    class="sell-button"
+                    (click)="sell(resource)"
+                    [disabled]="resource.amount === 0 || busyResourceId !== null"
+                  >
+                    {{ busyResourceId === resource.id ? 'Wird gebucht…' : 'Verkauf buchen' }}
+                  </button>
+                </div>
+              </div>
+
+              @if (rowMessages[resource.id]) {
+                <p class="row-message row-message--success" role="status">
+                  {{ rowMessages[resource.id] }}
+                </p>
+              }
+              @if (rowErrors[resource.id]) {
+                <p class="row-message row-message--error" role="alert">
+                  {{ rowErrors[resource.id] }}
+                </p>
+              }
+
+              <footer>
+                <small>Angelegt {{ resource.created_at | date: 'dd.MM.yyyy HH:mm' }}</small>
+                <button
+                  type="button"
+                  class="delete-button"
+                  (click)="deleteResource(resource)"
+                  [disabled]="busyResourceId !== null"
+                >
+                  Artikel löschen
+                </button>
+              </footer>
+            </article>
+          }
         </div>
-        <div>
-          <dt>Menge</dt>
-          <dd>{{ resource.amount }}</dd>
-        </div>
-        <div>
-          <dt>Kategorie</dt>
-          <dd>{{ resource.category_name }}</dd>
-        </div>
-        <div>
-          <dt>Hersteller</dt>
-          <dd>{{ resource.manufacturer_name }}</dd>
-        </div>
-        <div>
-          <dt>Material</dt>
-          <dd>{{ resource.material }}</dd>
-        </div>
-        <div>
-          <dt>Geschlecht</dt>
-          <dd>{{ resource.gender_name }}</dd>
-        </div>
-      </dl>
-      <small>{{ resource.created_at | date: 'dd.MM.yyyy HH:mm' }}</small>
+      </section>
+
+      <aside class="sales-panel" aria-labelledby="recent-sales-title">
+        <header>
+          <span class="eyebrow">AKTIVITÄT</span>
+          <h2 id="recent-sales-title">Letzte Verkäufe</h2>
+        </header>
+
+        @if (recentSales.length === 0) {
+          <p class="empty-state">Noch keine Verkäufe registriert.</p>
+        }
+
+        <ol>
+          @for (sale of recentSales; track sale.id) {
+            <li>
+              <span class="sale-quantity">−{{ sale.quantity }}</span>
+              <div>
+                <strong>{{ sale.resource_name }}</strong>
+                <span>{{ sale.stock_before }} → {{ sale.stock_after }} Stück</span>
+                <small>
+                  {{ sale.sold_by_username }} · {{ sale.sold_at | date: 'dd.MM.yyyy HH:mm' }}
+                </small>
+              </div>
+            </li>
+          }
+        </ol>
+      </aside>
     </div>
   }
-</div>
+</main>

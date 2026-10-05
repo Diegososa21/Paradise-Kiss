@@ -44,3 +44,21 @@ export interface SalesData {
   units_sold: number;
   revenue: string;
 }
+
+export interface InventorySale {
+  id: number;
+  resource: number | null;
+  resource_name: string;
+  category_name: string;
+  quantity: number;
+  stock_before: number;
+  stock_after: number;
+  sold_by: number | null;
+  sold_by_username: string;
+  sold_at: string;
+}
+
+export interface SellResourceResponse {
+  resource: Resource;
+  sale: InventorySale;
+}

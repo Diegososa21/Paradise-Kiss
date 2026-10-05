@@ -18,7 +18,8 @@ revoke all privileges on table
   public.resources_category,
   public.resources_gender,
   public.resources_manufacturer,
-  public.resources_salesdata
+  public.resources_salesdata,
+  public.resources_inventorysale
 from anon, authenticated;
 
 revoke all privileges on all sequences in schema public from anon, authenticated;
@@ -38,5 +39,6 @@ alter table public.resources_category enable row level security;
 alter table public.resources_gender enable row level security;
 alter table public.resources_manufacturer enable row level security;
 alter table public.resources_salesdata enable row level security;
+alter table public.resources_inventorysale enable row level security;
 
 commit;
