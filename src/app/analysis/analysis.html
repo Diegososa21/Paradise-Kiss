@@ -1,0 +1,111 @@
+<main class="workspace-shell">
+  <app-navigation-sidebar />
+
+  <section class="workspace-content">
+    <header class="workspace-header">
+      <div>
+        <span class="workspace-eyebrow">Analyse</span>
+        <h1>Verkaufsreport</h1>
+        <p>Quartale, Umsatz und stärkste Kategorien übersichtlich ausgewertet.</p>
+      </div>
+      <app-user-session />
+    </header>
+
+    <section class="workspace-summary" aria-label="Analysekennzahlen">
+      <article>
+        <span>Verkaufte Artikel</span>
+        <strong>{{ loading() ? '…' : latestYearUnits().toLocaleString('de-DE') }}</strong>
+        <small>{{ latestYear() ?? 'keine Daten' }}</small>
+      </article>
+      <article>
+        <span>Umsatz</span>
+        <strong>{{ loading() ? '…' : formatCurrency(latestYearRevenue()) }}</strong>
+        <small>{{ latestYear() ?? 'keine Daten' }}</small>
+      </article>
+      <article>
+        <span>Wachstum</span>
+        <strong>
+          @if (loading()) {
+            …
+          } @else if (growth() !== null) {
+            {{ growth()! >= 0 ? '+' : '' }}{{ growth()!.toFixed(1) }} %
+          } @else {
+            —
+          }
+        </strong>
+        <small>zum Vorjahr</small>
+      </article>
+    </section>
+
+    @if (loading()) {
+      <p class="analysis-state">Auswertung wird geladen…</p>
+    } @else if (error()) {
+      <p class="analysis-state analysis-state--error" role="alert">{{ error() }}</p>
+    } @else if (salesData().length === 0) {
+      <p class="analysis-state">Noch keine Verkaufsdaten vorhanden.</p>
+    } @else {
+      <section class="analysis-grid">
+        <article class="trend-card">
+          <header class="sales-header">
+            <div>
+              <h2>Verkaufsdaten</h2>
+              <p>Quartalsentwicklung über alle gespeicherten Jahre</p>
+            </div>
+            <span class="live-badge">{{ chartPoints().length }} Quartale</span>
+          </header>
+
+          <div class="chart-scroll">
+            <div class="sales-chart" role="img" aria-label="Verkäufe pro Quartal">
+              @for (point of chartPoints(); track point.year + '-' + point.quarter) {
+                <div
+                  class="sales-column"
+                  [attr.aria-label]="
+                    point.year + ' Q' + point.quarter + ': ' + point.units + ' verkaufte Artikel'
+                  "
+                  [title]="point.year + ' Q' + point.quarter + ': ' + point.units + ' Stück'"
+                >
+                  <span class="bar-value">{{ point.units }}</span>
+                  <div class="sales-bar-track" aria-hidden="true">
+                    <span
+                      [class]="'sales-bar sales-bar--' + point.tone"
+                      [style.height.%]="point.height"
+                    ></span>
+                  </div>
+                  <strong>Q{{ point.quarter }}</strong>
+                  <small>{{ point.year }}</small>
+                </div>
+              }
+            </div>
+          </div>
+        </article>
+
+        <article class="products-card">
+          <header>
+            <span class="workspace-eyebrow">Ranking</span>
+            <h2>Meistverkaufte Kategorien</h2>
+            <p>Gesamtübersicht aller Verkaufsdaten</p>
+          </header>
+          <ol>
+            @for (category of categorySummaries(); track category.name; let rank = $index) {
+              <li>
+                <span [class]="'rank rank--' + categoryTones[rank % categoryTones.length]">
+                  {{ rank + 1 }}
+                </span>
+                <div class="category-copy">
+                  <div>
+                    <strong>{{ category.name }}</strong>
+                    <span>{{ category.units.toLocaleString('de-DE') }} Stück</span>
+                  </div>
+                  <div class="category-progress" aria-hidden="true">
+                    <span [style.width.%]="category.share"></span>
+                  </div>
+                  <small>{{ formatCurrency(category.revenue) }} Umsatz</small>
+                </div>
+              </li>
+            }
+          </ol>
+        </article>
+      </section>
+    }
+  </section>
+</main>

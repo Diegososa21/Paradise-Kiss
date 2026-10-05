@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Gender, Manufacturer, SalesData, resources
+from .models import Category, Gender, InventorySale, Manufacturer, SalesData, resources
 
 
 
@@ -67,3 +67,30 @@ class SalesDataSerializer(serializers.ModelSerializer):
             'units_sold',
             'revenue',
         ]
+
+
+class SellResourceSerializer(serializers.Serializer):
+    quantity = serializers.IntegerField(min_value=1)
+
+
+class InventorySaleSerializer(serializers.ModelSerializer):
+    sold_by_username = serializers.SerializerMethodField()
+
+    def get_sold_by_username(self, obj):
+        return obj.sold_by.username if obj.sold_by else 'Unbekannt'
+
+    class Meta:
+        model = InventorySale
+        fields = [
+            'id',
+            'resource',
+            'resource_name',
+            'category_name',
+            'quantity',
+            'stock_before',
+            'stock_after',
+            'sold_by',
+            'sold_by_username',
+            'sold_at',
+        ]
+        read_only_fields = fields

@@ -1,0 +1,136 @@
+<main class="workspace-shell">
+  <app-navigation-sidebar />
+
+  <section class="workspace-content">
+    <header class="workspace-header">
+      <div>
+        <span class="workspace-eyebrow">Verkäufe</span>
+        <h1>Verkauf erfassen</h1>
+        <p>Verkaufsmenge buchen und den Restbestand sofort aktualisieren.</p>
+      </div>
+      <app-user-session />
+    </header>
+
+    <section class="workspace-summary" aria-label="Verkaufsübersicht">
+      <article>
+        <span>Buchungen</span>
+        <strong>{{ salesLoading() ? '…' : sales().length }}</strong>
+        <small>registrierte Verkäufe</small>
+      </article>
+      <article>
+        <span>Verkaufte Einheiten</span>
+        <strong>{{ salesLoading() ? '…' : soldUnits().toLocaleString('de-DE') }}</strong>
+        <small>aus echten Buchungen</small>
+      </article>
+      <article>
+        <span>Verfügbare Artikel</span>
+        <strong>{{ loading() ? '…' : availableResources().length }}</strong>
+        <small>mit positivem Bestand</small>
+      </article>
+    </section>
+
+    <div class="sales-layout">
+      <section class="sale-card" aria-labelledby="sale-form-title">
+        <header>
+          <span class="sale-icon" aria-hidden="true">−</span>
+          <div>
+            <span class="workspace-eyebrow">Neue Buchung</span>
+            <h2 id="sale-form-title">Artikel und Menge</h2>
+            <p>Die Menge wird direkt vom aktuellen Bestand abgezogen.</p>
+          </div>
+        </header>
+
+        @if (loading()) {
+          <p class="form-state">Artikel werden geladen…</p>
+        } @else if (error()) {
+          <p class="form-state form-state--error" role="alert">{{ error() }}</p>
+        } @else if (availableResources().length === 0) {
+          <p class="form-state">Es ist kein Artikel mit verfügbarem Bestand vorhanden.</p>
+        } @else {
+          <form (ngSubmit)="registerSale()">
+            <label for="sale-resource">Artikel</label>
+            <select
+              id="sale-resource"
+              name="resource"
+              [ngModel]="selectedResourceId()"
+              (ngModelChange)="selectResource($event)"
+            >
+              @for (resource of availableResources(); track resource.id) {
+                <option [ngValue]="resource.id">
+                  {{ resource.name }} · {{ resource.size }} · {{ resource.amount }} verfügbar
+                </option>
+              }
+            </select>
+
+            <label for="sale-quantity">Verkaufsmenge</label>
+            <input
+              id="sale-quantity"
+              name="quantity"
+              type="number"
+              min="1"
+              [max]="selectedResource()?.amount ?? 1"
+              step="1"
+              [ngModel]="quantity()"
+              (ngModelChange)="setQuantity($event)"
+            />
+
+            @if (selectedResource(); as resource) {
+              <div class="stock-preview">
+                <div>
+                  <span>Aktueller Bestand</span>
+                  <strong>{{ resource.amount }}</strong>
+                </div>
+                <span aria-hidden="true">→</span>
+                <div>
+                  <span>Nach Verkauf</span>
+                  <strong>{{ remainingStock() }}</strong>
+                </div>
+              </div>
+            }
+
+            @if (successMessage()) {
+              <p class="feedback feedback--success" role="status">{{ successMessage() }}</p>
+            }
+            @if (submitError()) {
+              <p class="feedback feedback--error" role="alert">{{ submitError() }}</p>
+            }
+
+            <button type="submit" [disabled]="submitting() || !selectedResource()">
+              {{ submitting() ? 'Wird gebucht…' : 'Verkauf verbindlich buchen' }}
+            </button>
+          </form>
+        }
+      </section>
+
+      <section class="history-card" aria-labelledby="history-title">
+        <header>
+          <span class="workspace-eyebrow">Aktivität</span>
+          <h2 id="history-title">Letzte Verkäufe</h2>
+        </header>
+
+        @if (salesLoading()) {
+          <p class="history-state">Verkaufshistorie wird geladen…</p>
+        } @else if (salesError()) {
+          <p class="history-state history-state--error" role="alert">{{ salesError() }}</p>
+        } @else if (sales().length === 0) {
+          <p class="history-state">Noch keine Verkäufe registriert.</p>
+        }
+
+        <ol>
+          @for (sale of sales(); track sale.id) {
+            <li>
+              <span class="sale-quantity">−{{ sale.quantity }}</span>
+              <div>
+                <strong>{{ sale.resource_name }}</strong>
+                <span>{{ sale.stock_before }} → {{ sale.stock_after }} Stück</span>
+                <small>
+                  {{ sale.sold_by_username }} · {{ sale.sold_at | date: 'dd.MM.yyyy HH:mm' }}
+                </small>
+              </div>
+            </li>
+          }
+        </ol>
+      </section>
+    </div>
+  </section>
+</main>

@@ -1,18 +1,5 @@
 <main class="dashboard-shell" data-figma-node="7:184">
-  <aside class="sidebar" data-figma-node="7:185">
-    <a class="brand" routerLink="/" aria-label="Paradise Kiss Inventory Studio">
-      <strong>PARADISE KISS</strong>
-      <span>Inventory Studio</span>
-    </a>
-
-    <nav class="sidebar-nav" aria-label="Hauptnavigation">
-      <a class="active" routerLink="/" aria-current="page">Home</a>
-      <a routerLink="/resources/new">Artikel</a>
-      <a href="#inventory">Bestand</a>
-      <a href="#sales-trend">Verkäufe</a>
-      <a href="#top-products">Analyse</a>
-    </nav>
-  </aside>
+  <app-navigation-sidebar data-figma-node="7:185" />
 
   <section class="dashboard-content">
     <header class="dashboard-header">
@@ -22,16 +9,7 @@
       </div>
       <div class="header-actions">
         <a class="add-button" routerLink="/resources/new">+ Neuer Artikel</a>
-        @if (auth.user(); as user) {
-          <div class="user-session">
-            <img [src]="user.avatar_url" [alt]="user.display_name" />
-            <div>
-              <strong>{{ user.display_name }}</strong>
-              <span><i aria-hidden="true"></i> Eingeloggt</span>
-            </div>
-            <button type="button" (click)="logout()" aria-label="Abmelden">Abmelden</button>
-          </div>
-        }
+        <app-user-session />
       </div>
     </header>
 
@@ -81,179 +59,10 @@
         <h2>Schnellaktionen</h2>
         <div class="quick-grid">
           <a class="quick-action quick-action--cyan" routerLink="/resources/new">Wareneingang</a>
-          <a class="quick-action quick-action--pink" href="#sales-trend">Verkauf erfassen</a>
-          <a class="quick-action quick-action--blue" routerLink="/resources">Inventur</a>
-          <a class="quick-action quick-action--orange" href="#top-products">Report öffnen</a>
+          <a class="quick-action quick-action--pink" routerLink="/sales">Verkauf erfassen</a>
+          <a class="quick-action quick-action--blue" routerLink="/inventory">Inventur</a>
+          <a class="quick-action quick-action--orange" routerLink="/analysis">Report öffnen</a>
         </div>
-      </article>
-    </section>
-
-    <section class="inventory-card" id="inventory" aria-labelledby="inventory-title">
-      <header>
-        <div>
-          <h2 id="inventory-title">Alle Produkte</h2>
-          <p>Aktueller Bestand aus der gemeinsamen Datenbank</p>
-        </div>
-        <a routerLink="/resources">Detailansicht öffnen</a>
-      </header>
-
-      <div class="inventory-table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">Produkt</th>
-              <th scope="col">Kategorie</th>
-              <th scope="col">Geschlecht</th>
-              <th scope="col">Größe</th>
-              <th scope="col">Bestand</th>
-              <th scope="col">Hersteller</th>
-            </tr>
-          </thead>
-          <tbody>
-            @if (loading()) {
-              <tr class="inventory-state">
-                <td colspan="6">Produkte werden geladen…</td>
-              </tr>
-            } @else if (resourceError()) {
-              <tr class="inventory-state inventory-state--error">
-                <td colspan="6">{{ resourceError() }}</td>
-              </tr>
-            } @else if (inventoryResources().length === 0) {
-              <tr class="inventory-state">
-                <td colspan="6">Noch keine Produkte vorhanden.</td>
-              </tr>
-            }
-
-            @for (item of inventoryResources(); track item.id; let index = $index) {
-              <tr class="inventory-row">
-                <td>
-                  <span
-                    [class]="
-                      'product-mark product-mark--' + categoryTones[index % categoryTones.length]
-                    "
-                    aria-hidden="true"
-                  ></span>
-                  <strong>{{ item.name }}</strong>
-                </td>
-                <td>{{ item.category_name }}</td>
-                <td>{{ item.gender_name }}</td>
-                <td>
-                  <span class="size-pill">{{ item.size }}</span>
-                </td>
-                <td>
-                  <span [class.low-stock]="item.amount <= 5">{{ item.amount }}</span>
-                </td>
-                <td>{{ item.manufacturer_name }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="bottom-grid">
-      <article class="trend-card" id="sales-trend" data-figma-node="7:243">
-        <header class="sales-header">
-          <div>
-            <h2>Verkaufsdaten</h2>
-            <p>Quartalsentwicklung 2023–2025</p>
-          </div>
-          <span class="live-badge">12 Quartale</span>
-        </header>
-
-        @if (salesLoading()) {
-          <p class="sales-state">Verkaufsdaten werden geladen…</p>
-        } @else if (salesError()) {
-          <p class="sales-state sales-state--error">{{ salesError() }}</p>
-        } @else if (salesChartPoints().length === 0) {
-          <p class="sales-state">Noch keine Verkaufsdaten vorhanden.</p>
-        } @else {
-          <div class="sales-summary">
-            <div>
-              <span>Verkaufte Artikel</span>
-              <strong>{{ latestYearUnits().toLocaleString('de-DE') }}</strong>
-              <small>{{ latestSalesYear() }}</small>
-            </div>
-            <div>
-              <span>Umsatz</span>
-              <strong>{{ formatCurrency(latestYearRevenue()) }}</strong>
-              <small>{{ latestSalesYear() }}</small>
-            </div>
-            <div>
-              <span>Wachstum</span>
-              <strong>
-                @if (salesGrowth() !== null) {
-                  {{ salesGrowth()! >= 0 ? '+' : '' }}{{ salesGrowth()!.toFixed(1) }} %
-                } @else {
-                  —
-                }
-              </strong>
-              <small>zum Vorjahr</small>
-            </div>
-          </div>
-
-          <div class="sales-chart" role="img" aria-label="Verkäufe pro Quartal von 2023 bis 2025">
-            @for (point of salesChartPoints(); track point.year + '-' + point.quarter) {
-              <div
-                class="sales-column"
-                [attr.aria-label]="
-                  point.year + ' Q' + point.quarter + ': ' + point.units + ' verkaufte Artikel'
-                "
-                [title]="point.year + ' Q' + point.quarter + ': ' + point.units + ' Stück'"
-              >
-                <span class="bar-value">{{ point.units }}</span>
-                <div class="sales-bar-track" aria-hidden="true">
-                  <span
-                    [class]="'sales-bar sales-bar--' + point.tone"
-                    [style.height.%]="point.height"
-                  ></span>
-                </div>
-                <strong>Q{{ point.quarter }}</strong>
-                <small>{{ point.year }}</small>
-              </div>
-            }
-          </div>
-
-          <div class="year-legend" aria-hidden="true">
-            <span><i class="legend-dot legend-dot--violet"></i>2023</span>
-            <span><i class="legend-dot legend-dot--cyan"></i>2024</span>
-            <span><i class="legend-dot legend-dot--pink"></i>2025</span>
-          </div>
-        }
-      </article>
-
-      <article class="products-card" id="top-products" data-figma-node="7:260">
-        <header>
-          <h2>Meistverkaufte Kategorien</h2>
-          <p>Gesamtübersicht 2023–2025</p>
-        </header>
-        <ol class="sales-category-list">
-          @for (category of salesCategorySummaries(); track category.name; let rank = $index) {
-            <li>
-              <span [class]="'rank rank--' + categoryTones[rank % categoryTones.length]">{{
-                rank + 1
-              }}</span>
-              <div class="category-copy">
-                <div>
-                  <strong>{{ category.name }}</strong>
-                  <span>{{ category.units.toLocaleString('de-DE') }} Stück</span>
-                </div>
-                <div class="category-progress" aria-hidden="true">
-                  <span [style.width.%]="category.share"></span>
-                </div>
-                <small>{{ formatCurrency(category.revenue) }} Umsatz</small>
-              </div>
-            </li>
-          }
-
-          @if (salesLoading()) {
-            <li class="category-empty">Auswertung wird geladen…</li>
-          } @else if (salesError()) {
-            <li class="category-empty category-empty--error">Keine Auswertung verfügbar</li>
-          } @else if (salesCategorySummaries().length === 0) {
-            <li class="category-empty">Keine Verkaufsdaten verfügbar</li>
-          }
-        </ol>
       </article>
     </section>
   </section>

@@ -1,18 +1,5 @@
 <main class="resource-shell">
-  <aside class="sidebar">
-    <a class="brand" routerLink="/" aria-label="Paradise Kiss Inventory Studio">
-      <strong>PARADISE KISS</strong>
-      <span>Inventory Studio</span>
-    </a>
-
-    <nav class="sidebar-nav" aria-label="Hauptnavigation">
-      <a routerLink="/">Home</a>
-      <a class="active" routerLink="/resources/new" aria-current="page">Artikel</a>
-      <a routerLink="/" fragment="inventory">Bestand</a>
-      <a routerLink="/" fragment="sales-trend">Verkäufe</a>
-      <a routerLink="/" fragment="top-products">Analyse</a>
-    </nav>
-  </aside>
+  <app-navigation-sidebar />
 
   <section class="resource-content">
     <header class="page-header">
@@ -22,16 +9,7 @@
         <p>Ergänze den gemeinsamen Bestand mit allen wichtigen Produktdetails.</p>
       </div>
 
-      @if (auth.user(); as user) {
-        <div class="user-session">
-          <img [src]="user.avatar_url" [alt]="user.display_name" />
-          <div>
-            <strong>{{ user.display_name }}</strong>
-            <span><i aria-hidden="true"></i> Eingeloggt</span>
-          </div>
-          <button type="button" (click)="logout()" aria-label="Abmelden">Abmelden</button>
-        </div>
-      }
+      <app-user-session />
     </header>
 
     <div class="form-layout">
@@ -194,7 +172,7 @@
           </li>
         </ol>
 
-        <a routerLink="/resources">Alle Produkte ansehen</a>
+        <a routerLink="/inventory">Alle Produkte ansehen</a>
       </aside>
     </div>
   </section>

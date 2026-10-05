@@ -1,0 +1,23 @@
+<aside class="sidebar">
+  <a class="brand" routerLink="/" aria-label="Paradise Kiss Inventory Studio">
+    <strong>PARADISE KISS</strong>
+    <span>Inventory Studio</span>
+  </a>
+
+  <nav class="sidebar-nav" aria-label="Hauptnavigation">
+    <a
+      routerLink="/"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      ariaCurrentWhenActive="page"
+    >
+      Home
+    </a>
+    <a routerLink="/resources/new" routerLinkActive="active" ariaCurrentWhenActive="page">
+      Artikel
+    </a>
+    <a routerLink="/inventory" routerLinkActive="active" ariaCurrentWhenActive="page"> Bestand </a>
+    <a routerLink="/sales" routerLinkActive="active" ariaCurrentWhenActive="page">Verkäufe</a>
+    <a routerLink="/analysis" routerLinkActive="active" ariaCurrentWhenActive="page">Analyse</a>
+  </nav>
+</aside>

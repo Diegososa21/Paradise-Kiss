@@ -1,0 +1,10 @@
+@if (auth.user(); as user) {
+  <div class="user-session">
+    <img [src]="user.avatar_url" [alt]="user.display_name" />
+    <div>
+      <strong>{{ user.display_name }}</strong>
+      <span><i aria-hidden="true"></i> Eingeloggt</span>
+    </div>
+    <button type="button" (click)="logout()" aria-label="Abmelden">Abmelden</button>
+  </div>
+}

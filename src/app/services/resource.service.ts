@@ -5,9 +5,11 @@ import {
   Category,
   CreateResource,
   Gender,
+  InventorySale,
   Manufacturer,
   Resource,
   SalesData,
+  SellResourceResponse,
 } from '../models/resource.model';
 
 @Injectable({
@@ -26,6 +28,16 @@ export class ResourceService {
     return this.http.post<Resource>(`${this.baseUrl}/resources/`, resource);
   }
 
+  sell(resourceId: number, quantity: number): Observable<SellResourceResponse> {
+    return this.http.post<SellResourceResponse>(`${this.baseUrl}/resources/${resourceId}/sell/`, {
+      quantity,
+    });
+  }
+
+  delete(resourceId: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/resources/${resourceId}/`);
+  }
+
   getCategories(): Observable<Category[]> {
     return this.http.get<Category[]>(`${this.baseUrl}/categories/`);
   }
@@ -40,5 +52,9 @@ export class ResourceService {
 
   getSalesData(): Observable<SalesData[]> {
     return this.http.get<SalesData[]>(`${this.baseUrl}/sales/`);
+  }
+
+  getInventorySales(): Observable<InventorySale[]> {
+    return this.http.get<InventorySale[]>(`${this.baseUrl}/inventory-sales/`);
   }
 }
