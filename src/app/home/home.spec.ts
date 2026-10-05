@@ -114,29 +114,25 @@ describe('HomeComponent', () => {
     expect(content).toContain('5 oder weniger');
   });
 
-  it('shows all resources in the dashboard inventory', () => {
+  it('shows only the latest resources on the dashboard', () => {
     const content = fixture.nativeElement.textContent;
-    const rows = fixture.nativeElement.querySelectorAll('.inventory-row');
+    const rows = fixture.nativeElement.querySelectorAll('.attention-row');
 
     expect(rows).toHaveLength(2);
     expect(content).toContain('Violet Top');
     expect(content).toContain('White Tee');
-    expect(content).toContain('Tops');
-    expect(content).toContain('Tees');
-    expect(content).toContain('Paradise Kiss');
-    expect(content).toContain('Unisex');
+    expect(fixture.nativeElement.querySelector('.inventory-card')).toBeNull();
   });
 
-  it('shows sales KPIs and diagrams returned by the backend', () => {
+  it('keeps sales KPIs and links every quick action to its own section', () => {
     const content = fixture.nativeElement.textContent;
-    const bars = fixture.nativeElement.querySelectorAll('.sales-column');
-    const categoryRows = fixture.nativeElement.querySelectorAll('.sales-category-list > li');
+    const quickActions = [...fixture.nativeElement.querySelectorAll('.quick-action')].map(
+      (link: HTMLAnchorElement) => link.getAttribute('href'),
+    );
 
-    expect(content).toContain('Verkaufsdaten');
     expect(content).toContain('2025');
-    expect(content).toContain('Jackets');
     expect(content).toContain('140');
-    expect(bars).toHaveLength(2);
-    expect(categoryRows).toHaveLength(2);
+    expect(quickActions).toEqual(['/resources/new', '/sales', '/inventory', '/analysis']);
+    expect(fixture.nativeElement.querySelector('.sales-column')).toBeNull();
   });
 });

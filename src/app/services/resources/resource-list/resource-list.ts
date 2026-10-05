@@ -6,11 +6,12 @@ import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { InventorySale, Resource } from '../../../models/resource.model';
 import { ResourceService } from '../../resource.service';
+import { NavigationSidebarComponent } from '../../../shared/navigation-sidebar/navigation-sidebar';
 
 @Component({
   selector: 'app-resource-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, NavigationSidebarComponent],
   templateUrl: './resource-list.html',
   styleUrl: './resource-list.scss',
 })

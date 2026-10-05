@@ -1,0 +1,99 @@
+<main class="workspace-shell">
+  <app-navigation-sidebar />
+
+  <section class="workspace-content">
+    <header class="workspace-header">
+      <div>
+        <span class="workspace-eyebrow">Bestand</span>
+        <h1>Alle Produkte</h1>
+        <p>Der vollständige Warenbestand aus der gemeinsamen Datenbank.</p>
+      </div>
+      <div class="workspace-header-actions">
+        <a class="manage-link" routerLink="/inventory/manage">Bestand bearbeiten</a>
+        <a class="workspace-primary-action" routerLink="/resources/new">+ Neuer Artikel</a>
+        <app-user-session />
+      </div>
+    </header>
+
+    <section class="workspace-summary" aria-label="Bestandsübersicht">
+      <article>
+        <span>Produkte</span>
+        <strong>{{ loading() ? '…' : resources().length }}</strong>
+        <small>verschiedene Artikel</small>
+      </article>
+      <article>
+        <span>Einheiten im Lager</span>
+        <strong>{{ loading() ? '…' : totalStock().toLocaleString('de-DE') }}</strong>
+        <small>aktueller Gesamtbestand</small>
+      </article>
+      <article>
+        <span>Niedriger Bestand</span>
+        <strong>{{ loading() ? '…' : lowStockCount() }}</strong>
+        <small>5 Einheiten oder weniger</small>
+      </article>
+    </section>
+
+    <section class="inventory-card" aria-labelledby="inventory-title">
+      <header>
+        <div>
+          <h2 id="inventory-title">Produktübersicht</h2>
+          <p>Alle Größen, Kategorien und Hersteller auf einen Blick.</p>
+        </div>
+        <a routerLink="/inventory/manage">Verkäufe, Bestand und Löschung verwalten →</a>
+      </header>
+
+      <div class="inventory-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Produkt</th>
+              <th scope="col">Kategorie</th>
+              <th scope="col">Geschlecht</th>
+              <th scope="col">Größe</th>
+              <th scope="col">Bestand</th>
+              <th scope="col">Hersteller</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (loading()) {
+              <tr class="inventory-state">
+                <td colspan="6">Produkte werden geladen…</td>
+              </tr>
+            } @else if (error()) {
+              <tr class="inventory-state inventory-state--error">
+                <td colspan="6">{{ error() }}</td>
+              </tr>
+            } @else if (sortedResources().length === 0) {
+              <tr class="inventory-state">
+                <td colspan="6">Noch keine Produkte vorhanden.</td>
+              </tr>
+            }
+
+            @for (item of sortedResources(); track item.id; let index = $index) {
+              <tr class="inventory-row">
+                <td>
+                  <span
+                    [class]="
+                      'product-mark product-mark--' + categoryTones[index % categoryTones.length]
+                    "
+                    aria-hidden="true"
+                  ></span>
+                  <strong>{{ item.name }}</strong>
+                </td>
+                <td>{{ item.category_name }}</td>
+                <td>{{ item.gender_name }}</td>
+                <td>
+                  <span class="size-pill">{{ item.size }}</span>
+                </td>
+                <td>
+                  <span [class.low-stock]="item.amount <= 5">{{ item.amount }}</span>
+                </td>
+                <td>{{ item.manufacturer_name }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+</main>

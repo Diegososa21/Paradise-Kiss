@@ -1,0 +1,157 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #fff5fc;
+}
+
+.manage-link {
+  color: var(--pink-dark);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.manage-link:hover,
+.manage-link:focus-visible {
+  text-decoration: underline;
+}
+
+.inventory-card {
+  padding: 24px;
+  overflow: hidden;
+  border-radius: 26px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.inventory-card > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding-inline: 4px;
+}
+
+h2,
+.inventory-card p {
+  margin: 0;
+}
+
+h2 {
+  font-size: 20px;
+}
+
+.inventory-card header p {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.inventory-card header a {
+  color: var(--pink-dark);
+  font-size: 11px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.inventory-table-wrap {
+  margin-top: 22px;
+  overflow-x: auto;
+  border: 1px solid #eee5f2;
+  border-radius: 18px;
+}
+
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+th,
+td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0e8f4;
+  font-size: 12px;
+}
+
+th {
+  color: var(--muted);
+  background: #fcf8fd;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+tbody tr:not(.inventory-state):hover {
+  background: #fff9fd;
+}
+
+td:first-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.product-mark {
+  width: 10px;
+  height: 26px;
+  flex: 0 0 10px;
+  border-radius: 999px;
+}
+
+.product-mark--pink {
+  background: var(--pink);
+}
+
+.product-mark--cyan {
+  background: var(--cyan);
+}
+
+.product-mark--orange {
+  background: var(--orange);
+}
+
+.product-mark--violet {
+  background: var(--violet);
+}
+
+.size-pill {
+  display: inline-grid;
+  min-width: 30px;
+  min-height: 26px;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--purple);
+  background: #f0e5ff;
+  font-weight: 700;
+}
+
+.low-stock {
+  color: var(--pink-dark);
+  font-weight: 850;
+}
+
+.inventory-state td {
+  height: 180px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.inventory-state--error td {
+  color: var(--pink-dark);
+}
+
+@media (max-width: 760px) {
+  .inventory-card {
+    padding: 18px;
+  }
+
+  .inventory-card > header {
+    flex-direction: column;
+  }
+}
