@@ -361,3 +361,18 @@ class ResourceApiTests(APITestCase):
         self.assertTrue(any('Artikel aktualisiert' in subject for subject in subjects))
         self.assertTrue(any('Artikel gelöscht' in subject for subject in subjects))
         self.assertIn('Ausgeführt von: sosa.diego', mail.outbox[0].body)
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        INVENTORY_EMAIL_NOTIFICATIONS_ENABLED=True,
+        DEFAULT_FROM_EMAIL='lager@example.com',
+    )
+    def test_notifies_team_after_resource_creation(self):
+        mail.outbox.clear()
+
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post('/tables/resources/', self.api_payload(), format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertTrue(all('Artikel angelegt' in message.subject for message in mail.outbox))
