@@ -1,0 +1,132 @@
+:host {
+  display: block;
+  min-height: 100%;
+}
+
+.sidebar {
+  min-height: 100%;
+  padding: 24px 14px;
+  border-radius: 26px;
+  color: #fff;
+  background: #3d1f61;
+  box-sizing: border-box;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 10px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand strong {
+  font-size: 21px;
+  line-height: 1.2;
+}
+
+.brand span {
+  color: #d9c2eb;
+  font-size: 11px;
+}
+
+.sidebar-nav {
+  display: grid;
+  gap: 16px;
+  margin-top: 34px;
+}
+
+.sidebar-nav a {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  padding: 0 16px;
+  border-radius: 14px;
+  color: #fff;
+  font-size: 13px;
+  text-decoration: none;
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.sidebar-section {
+  gap: 10px;
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.sidebar-section-title {
+  padding: 0 16px;
+  color: #d9c2eb;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ai-link {
+  gap: 10px;
+}
+
+.ai-sparkle {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  filter: drop-shadow(0 0 6px rgba(184, 148, 250, 0.55));
+}
+
+.ai-badge {
+  margin-left: auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  color: #3d1f61;
+  background: linear-gradient(90deg, #42d6eb, #ff59ab);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.sidebar-nav a:hover,
+.sidebar-nav a:focus-visible,
+.sidebar-nav a.active {
+  background: #ff59ab;
+  transform: translateX(2px);
+}
+
+@media (max-width: 760px) {
+  :host {
+    min-height: 0;
+  }
+
+  .sidebar {
+    min-height: 0;
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+    overflow-x: auto;
+  }
+
+  .sidebar-nav a {
+    min-height: 36px;
+    flex: 0 0 auto;
+  }
+
+  .sidebar-section {
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+
+  .sidebar-section-title {
+    flex: 0 0 auto;
+    padding: 0 4px;
+  }
+}

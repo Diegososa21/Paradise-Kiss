@@ -1,1 +1,194 @@
-/* You can add global styles to this file, and also import other style files */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #fff5fc;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+*:focus-visible {
+  outline: 3px solid #42d6eb;
+  outline-offset: 3px;
+}
+
+.workspace-shell {
+  --ink: #291f3b;
+  --muted: #7a6b8f;
+  --purple: #3d1f61;
+  --purple-dark: #382157;
+  --violet: #b894fa;
+  --pink: #ff59ab;
+  --pink-dark: #ed248f;
+  --blue: #4078f2;
+  --cyan: #42d6eb;
+  --orange: #ff964d;
+  --yellow: #ffdb5e;
+  display: grid;
+  grid-template-columns: 228px minmax(0, 1fr);
+  gap: 40px;
+  width: min(100%, 1440px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 22px 40px 22px 22px;
+  color: var(--ink);
+  background: #fff5fc;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  box-sizing: border-box;
+}
+
+.workspace-content {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 28px;
+}
+
+:root {
+  /* Width kept free in page headers for the fixed profile widget (app.scss). */
+  --session-widget-space: 280px;
+}
+
+.workspace-header,
+.dashboard-header,
+.page-header {
+  padding-right: var(--session-widget-space);
+}
+
+@media (max-width: 760px) {
+  :root {
+    --session-widget-space: 0px;
+  }
+}
+
+.workspace-header {
+  display: flex;
+  min-height: 82px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-top: 7px;
+}
+
+.workspace-header h1,
+.workspace-header p {
+  margin: 0;
+}
+
+.workspace-header h1 {
+  font-size: clamp(28px, 3vw, 36px);
+  line-height: 1.15;
+}
+
+.workspace-header p {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.workspace-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.workspace-primary-action {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--pink-dark);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.workspace-eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--pink-dark);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.workspace-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.workspace-summary article {
+  display: grid;
+  min-height: 104px;
+  align-content: center;
+  gap: 4px;
+  padding: 18px 22px;
+  border-radius: 20px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.workspace-summary span,
+.workspace-summary small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.workspace-summary strong {
+  font-size: 27px;
+}
+
+@media (max-width: 1100px) {
+  .workspace-shell {
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 24px;
+    padding-right: 22px;
+  }
+}
+
+@media (max-width: 760px) {
+  .workspace-shell {
+    display: block;
+    min-height: 100vh;
+    padding: 12px;
+  }
+
+  .workspace-content {
+    gap: 20px;
+    margin-top: 22px;
+  }
+
+  .workspace-header,
+  .workspace-header-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .workspace-primary-action {
+    align-self: flex-start;
+  }
+
+  .workspace-summary {
+    grid-template-columns: 1fr;
+  }
+}

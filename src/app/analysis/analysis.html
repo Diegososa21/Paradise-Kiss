@@ -1,0 +1,120 @@
+<main class="workspace-shell">
+  <app-navigation-sidebar />
+
+  <section class="workspace-content">
+    <header class="workspace-header">
+      <div>
+        <span class="workspace-eyebrow">Analyse</span>
+        <h1>Verkaufsreport</h1>
+        <p>Quartalsentwicklung seit 2023 und alle in der App registrierten Verkäufe.</p>
+      </div>
+    </header>
+
+    <section class="workspace-summary" aria-label="Analysekennzahlen">
+      <article>
+        <span>Verkaufte Artikel</span>
+        <strong>{{ loading() ? '…' : soldUnits().toLocaleString('de-DE') }}</strong>
+        <small>über alle echten Buchungen</small>
+      </article>
+      <article>
+        <span>Verkaufsbuchungen</span>
+        <strong>{{ loading() ? '…' : sales().length.toLocaleString('de-DE') }}</strong>
+        <small>mit Benutzer und Zeitstempel</small>
+      </article>
+      <article>
+        <span>Letzter Verkauf</span>
+        <strong>{{
+          latestSale()?.sold_at ? (latestSale()!.sold_at | date: 'dd.MM.yyyy') : '—'
+        }}</strong>
+        <small>{{ latestSale()?.resource_name ?? 'noch keine Daten' }}</small>
+      </article>
+    </section>
+
+    @if (loading()) {
+      <p class="analysis-state">Auswertung wird geladen…</p>
+    } @else if (error()) {
+      <p class="analysis-state analysis-state--error" role="alert">{{ error() }}</p>
+    } @else if (chartPoints().length === 0) {
+      <p class="analysis-state">Noch keine Verkaufsdaten vorhanden.</p>
+      <app-ki-assistant />
+    } @else {
+      <section class="analysis-grid">
+        <div class="analysis-main">
+          <article class="trend-card">
+            <header class="sales-header">
+              <div>
+                <h2>Verkaufsdaten</h2>
+                <p>Verkaufte Stück pro Quartal · Umsatz im Tooltip</p>
+              </div>
+              <span class="live-badge">{{ chartPoints().length }} Quartale</span>
+            </header>
+
+            @if (hasHistory()) {
+              <ul class="chart-legend" aria-label="Legende">
+                <li><span class="legend-swatch legend-swatch--history"></span>Historische Daten</li>
+                <li>
+                  <span class="legend-swatch legend-swatch--live"></span>Registrierte Verkäufe
+                </li>
+              </ul>
+            }
+
+            <div class="chart-scroll">
+              <div class="sales-chart" role="img" aria-label="Verkäufe pro Quartal">
+                @for (point of chartPoints(); track point.year + '-' + point.quarter) {
+                  <div
+                    class="sales-column"
+                    [class.sales-column--year-start]="point.quarter === 1"
+                    [attr.aria-label]="point.label"
+                    [title]="point.label"
+                  >
+                    <span class="bar-value">{{ point.units.toLocaleString('de-DE') }}</span>
+                    <div class="sales-bar-track" aria-hidden="true">
+                      <span
+                        [class]="'sales-bar sales-bar--' + point.tone"
+                        [style.height.%]="point.height"
+                      ></span>
+                    </div>
+                    <strong>Q{{ point.quarter }}</strong>
+                    <small>{{ point.year }}</small>
+                  </div>
+                }
+              </div>
+            </div>
+          </article>
+
+          <app-ki-assistant />
+        </div>
+
+        <article class="products-card">
+          <header>
+            <span class="workspace-eyebrow">Ranking</span>
+            <h2>Artikel im Vergleich</h2>
+            <p>Von stark verkauft bis bisher ohne Verkauf</p>
+          </header>
+          <ol>
+            @for (product of productSummaries(); track product.name; let rank = $index) {
+              <li>
+                <span [class]="'rank rank--' + categoryTones[rank % categoryTones.length]">
+                  {{ rank + 1 }}
+                </span>
+                <div class="category-copy">
+                  <div>
+                    <strong>{{ product.name }}</strong>
+                    <span>{{ product.units.toLocaleString('de-DE') }} Stück</span>
+                  </div>
+                  <div class="category-progress" aria-hidden="true">
+                    <span [style.width.%]="product.share"></span>
+                  </div>
+                  <small>
+                    {{ product.category }} ·
+                    {{ product.units === 0 ? 'noch nicht verkauft' : 'registrierte Verkäufe' }}
+                  </small>
+                </div>
+              </li>
+            }
+          </ol>
+        </article>
+      </section>
+    }
+  </section>
+</main>

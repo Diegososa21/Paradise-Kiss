@@ -1,0 +1,80 @@
+<section id="ki-assistant" class="assistant-card" aria-labelledby="assistant-title">
+  <header>
+    <div>
+      <span class="assistant-eyebrow">KI-Assistent</span>
+      <h2 id="assistant-title">
+        <svg class="title-sparkle" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path
+            d="M10 3c.6 3.9 3.1 6.4 7 7-3.9.6-6.4 3.1-7 7-.6-3.9-3.1-6.4-7-7 3.9-.6 6.4-3.1 7-7Z"
+          />
+          <path
+            d="M18.5 13.5c.3 1.9 1.3 2.9 3.2 3.2-1.9.3-2.9 1.3-3.2 3.2-.3-1.9-1.3-2.9-3.2-3.2 1.9-.3 2.9-1.3 3.2-3.2Z"
+          />
+        </svg>
+        Frag deine Verkaufsdaten
+      </h2>
+      <p>
+        Bestseller, Umsatzentwicklung und Einkaufstipps aus den historischen Daten und allen
+        registrierten Verkäufen.
+      </p>
+    </div>
+    @if (messages().length > 0) {
+      <button type="button" class="assistant-clear" (click)="clear()">Neues Gespräch</button>
+    }
+  </header>
+
+  <div class="assistant-suggestions" aria-label="Vorschläge">
+    @for (suggestion of suggestions; track suggestion) {
+      <button type="button" (click)="ask(suggestion)" [disabled]="loading()">
+        {{ suggestion }}
+      </button>
+    }
+  </div>
+
+  @if (messages().length > 0 || loading()) {
+    <ol class="assistant-messages" aria-live="polite">
+      @for (message of messages(); track $index) {
+        <li [class]="'assistant-message assistant-message--' + message.role">
+          @if (message.role === 'assistant') {
+            <span class="assistant-mode" [class.assistant-mode--ai]="message.mode === 'gemini'">
+              {{ message.mode === 'gemini' ? 'Gemini' : 'Basis-Analyse' }}
+            </span>
+          }
+          <p>{{ message.text }}</p>
+          @if (message.notice) {
+            <small>{{ message.notice }}</small>
+          }
+        </li>
+      }
+      @if (loading()) {
+        <li class="assistant-message assistant-message--assistant assistant-message--loading">
+          <p>Analysiere Verkaufsdaten…</p>
+        </li>
+      }
+    </ol>
+  }
+
+  @if (error()) {
+    <p class="assistant-error" role="alert">{{ error() }}</p>
+  }
+
+  <form class="assistant-form" (submit)="submit($event)">
+    <label class="visually-hidden" for="assistant-question">Frage an den KI-Assistenten</label>
+    <input
+      id="assistant-question"
+      type="text"
+      maxlength="500"
+      autocomplete="off"
+      placeholder="z. B. Welche Produktarten sollten wir für Q1 einkaufen?"
+      [value]="question()"
+      (input)="updateQuestion($event)"
+      [disabled]="loading()"
+    />
+    <button type="submit" [disabled]="loading() || !question().trim()">Fragen</button>
+  </form>
+
+  <p class="assistant-privacy">
+    Es werden nur zusammengefasste Verkaufs-, Lager- und Preisdaten verwendet, keine Benutzernamen
+    oder E-Mail-Adressen. KI-Antworten können Fehler enthalten: Empfehlungen vor dem Einkauf prüfen.
+  </p>
+</section>

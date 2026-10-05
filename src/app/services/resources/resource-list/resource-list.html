@@ -1,0 +1,465 @@
+<main class="workspace-shell">
+  <app-navigation-sidebar />
+
+  <section class="workspace-content inventory-management">
+    <header class="page-header">
+      <div>
+        <a class="back-link" routerLink="/inventory">← Zurück zur Produktübersicht</a>
+        <span class="eyebrow">BESTAND VERWALTEN</span>
+        <h1>Bestand verwalten</h1>
+        <p>Nachbestellungen, Lagerplätze, Verkäufe und Restbestände kontrollieren.</p>
+      </div>
+      <a class="add-button" routerLink="/resources/new">+ Neuer Artikel</a>
+    </header>
+
+    @if (loading()) {
+      <p class="page-state">Daten werden geladen…</p>
+    } @else if (error()) {
+      <p class="page-state page-state--error">{{ error() }}</p>
+    } @else {
+      <section class="inventory-overview" aria-label="Bestandsübersicht">
+        <article>
+          <span>Artikel</span>
+          <strong>{{ resources().length }}</strong>
+        </article>
+        <article>
+          <span>Einheiten im Lager</span>
+          <strong>{{ totalStock() }}</strong>
+        </article>
+        <article>
+          <span>Niedriger Bestand</span>
+          <strong>{{ lowStockCount() }}</strong>
+          <small>Meldeschwelle erreicht</small>
+        </article>
+        <article>
+          <span>Registrierte Verkäufe</span>
+          <strong>{{ salesLoading() ? '…' : totalSalesCount() }}</strong>
+          <small>gespeicherte Buchungen</small>
+        </article>
+      </section>
+
+      <div class="content-grid">
+        <section class="product-panel" aria-labelledby="products-title">
+          <header>
+            <div>
+              <h2 id="products-title">Aktueller Bestand</h2>
+              <p>Die Menge wird direkt nach jedem Verkauf aktualisiert.</p>
+            </div>
+          </header>
+
+          @if (resources().length === 0) {
+            <p class="empty-state">Noch keine Artikel vorhanden.</p>
+          }
+
+          <div class="resource-grid">
+            @for (resource of resources(); track resource.id) {
+              <article class="resource-card" [class.resource-card--empty]="resource.amount === 0">
+                <header>
+                  <div>
+                    <span class="category-label">{{ resource.category_name }}</span>
+                    <h3>{{ resource.name }}</h3>
+                    <p>{{ resource.desc }}</p>
+                  </div>
+                  <div
+                    class="stock-badge"
+                    [class.stock-badge--empty]="resource.amount === 0"
+                    [class.stock-badge--low]="
+                      resource.amount > 0 && resource.amount <= resource.reorder_threshold
+                    "
+                  >
+                    <strong>{{ resource.amount }}</strong>
+                    <span>verfügbar</span>
+                  </div>
+                </header>
+
+                @if (editingResourceId() === resource.id && detailDraft(); as draft) {
+                  <form
+                    class="details-form"
+                    [attr.aria-label]="'Produktdetails von ' + resource.name + ' bearbeiten'"
+                    (ngSubmit)="saveDetails(resource)"
+                  >
+                    <strong>Produktdetails bearbeiten</strong>
+                    <div class="details-grid">
+                      <label class="details-wide">
+                        Name
+                        <input
+                          type="text"
+                          name="name"
+                          maxlength="200"
+                          required
+                          [ngModel]="draft.name"
+                          (ngModelChange)="updateDetailDraft('name', $event)"
+                        />
+                      </label>
+                      <label class="details-wide">
+                        Beschreibung
+                        <textarea
+                          name="desc"
+                          rows="2"
+                          maxlength="200"
+                          required
+                          [ngModel]="draft.desc"
+                          (ngModelChange)="updateDetailDraft('desc', $event)"
+                        ></textarea>
+                      </label>
+                      <label>
+                        Größe
+                        <input
+                          type="text"
+                          name="size"
+                          maxlength="10"
+                          required
+                          [ngModel]="draft.size"
+                          (ngModelChange)="updateDetailDraft('size', $event)"
+                        />
+                      </label>
+                      <label>
+                        Material
+                        <input
+                          type="text"
+                          name="material"
+                          maxlength="200"
+                          required
+                          [ngModel]="draft.material"
+                          (ngModelChange)="updateDetailDraft('material', $event)"
+                        />
+                      </label>
+                      <label>
+                        Kategorie
+                        <select
+                          name="category"
+                          [ngModel]="draft.category"
+                          (ngModelChange)="updateDetailDraft('category', $event)"
+                          [disabled]="detailOptionsLoading()"
+                        >
+                          @for (category of categories(); track category.id) {
+                            <option [ngValue]="category.id">{{ category.name }}</option>
+                          } @empty {
+                            <option [ngValue]="draft.category">{{ resource.category_name }}</option>
+                          }
+                        </select>
+                      </label>
+                      <label>
+                        Lieferant
+                        <select
+                          name="manufacturer"
+                          [ngModel]="draft.manufacturer"
+                          (ngModelChange)="updateDetailDraft('manufacturer', $event)"
+                          [disabled]="detailOptionsLoading()"
+                        >
+                          @for (manufacturer of manufacturers(); track manufacturer.id) {
+                            <option [ngValue]="manufacturer.id">
+                              {{ manufacturer.name }} · {{ manufacturer.location }}
+                            </option>
+                          } @empty {
+                            <option [ngValue]="draft.manufacturer">
+                              {{ resource.manufacturer_name }}
+                            </option>
+                          }
+                        </select>
+                      </label>
+                      <label>
+                        Geschlecht
+                        <select
+                          name="gender"
+                          [ngModel]="draft.gender"
+                          (ngModelChange)="updateDetailDraft('gender', $event)"
+                          [disabled]="detailOptionsLoading()"
+                        >
+                          @for (gender of genders(); track gender.id) {
+                            <option [ngValue]="gender.id">{{ gender.name }}</option>
+                          } @empty {
+                            <option [ngValue]="draft.gender">{{ resource.gender_name }}</option>
+                          }
+                        </select>
+                      </label>
+                    </div>
+                    <p class="details-hint">
+                      GTIN, Bestand und Preise bleiben unverändert. Bestand ändert sich nur über
+                      Verkauf und Nachbestellung.
+                    </p>
+                    <div class="details-actions">
+                      <button
+                        type="submit"
+                        class="details-save"
+                        [disabled]="busyResourceId() !== null"
+                      >
+                        {{
+                          busyResourceId() === resource.id
+                            ? 'Wird gespeichert…'
+                            : 'Details speichern'
+                        }}
+                      </button>
+                      <button
+                        type="button"
+                        class="details-cancel"
+                        (click)="cancelEditingDetails()"
+                        [disabled]="busyResourceId() === resource.id"
+                      >
+                        Abbrechen
+                      </button>
+                    </div>
+                  </form>
+                } @else {
+                  <dl>
+                    <div>
+                      <dt>GTIN</dt>
+                      <dd>{{ resource.gtin || '—' }}</dd>
+                    </div>
+                    <div>
+                      <dt>WHS-Preis</dt>
+                      <dd>{{ formatPrice(resource.wholesale_price) }}</dd>
+                    </div>
+                    <div>
+                      <dt>RT-Preis</dt>
+                      <dd>{{ formatPrice(resource.retail_price) }}</dd>
+                    </div>
+                    <div>
+                      <dt>Größe</dt>
+                      <dd>{{ resource.size }}</dd>
+                    </div>
+                    <div>
+                      <dt>Lieferant</dt>
+                      <dd>{{ resource.manufacturer_name }}</dd>
+                    </div>
+                    <div>
+                      <dt>Material</dt>
+                      <dd>{{ resource.material }}</dd>
+                    </div>
+                    <div>
+                      <dt>Geschlecht</dt>
+                      <dd>{{ resource.gender_name }}</dd>
+                    </div>
+                    <div>
+                      <dt>Regal</dt>
+                      <dd>{{ resource.shelf_number || '—' }}</dd>
+                    </div>
+                    <div>
+                      <dt>Fach</dt>
+                      <dd>{{ resource.bin_number || '—' }}</dd>
+                    </div>
+                    <div>
+                      <dt>Letzter Einkauf</dt>
+                      <dd>
+                        {{
+                          resource.purchase_date
+                            ? (resource.purchase_date | date: 'dd.MM.yyyy')
+                            : '—'
+                        }}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Meldeschwelle</dt>
+                      <dd>{{ resource.reorder_threshold }} Stück</dd>
+                    </div>
+                  </dl>
+                  <button
+                    type="button"
+                    class="edit-button"
+                    (click)="startEditingDetails(resource)"
+                    [disabled]="busyResourceId() !== null"
+                  >
+                    Details bearbeiten
+                  </button>
+                }
+
+                <div class="movement-controls sale-controls">
+                  <strong>Verkauf</strong>
+                  <label [for]="'sale-quantity-' + resource.id">Menge</label>
+                  <div>
+                    <input
+                      [id]="'sale-quantity-' + resource.id"
+                      type="number"
+                      min="1"
+                      [max]="resource.amount"
+                      step="1"
+                      [ngModel]="saleQuantities()[resource.id]"
+                      (ngModelChange)="setSaleQuantity(resource.id, $event)"
+                      [disabled]="resource.amount === 0 || busyResourceId() === resource.id"
+                    />
+                    <button
+                      type="button"
+                      class="sell-button"
+                      (click)="sell(resource)"
+                      [disabled]="resource.amount === 0 || busyResourceId() !== null"
+                    >
+                      {{ busyResourceId() === resource.id ? 'Wird gebucht…' : 'Verkauf buchen' }}
+                    </button>
+                  </div>
+                </div>
+
+                <div class="movement-controls restock-controls">
+                  <strong>Nachbestellung</strong>
+                  <div class="restock-grid">
+                    <label>
+                      Menge
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        [ngModel]="restockQuantities()[resource.id]"
+                        (ngModelChange)="setRestockQuantity(resource.id, $event)"
+                        [disabled]="busyResourceId() === resource.id"
+                      />
+                    </label>
+                    <label>
+                      Einkaufsdatum
+                      <input
+                        type="date"
+                        [ngModel]="restockDates()[resource.id]"
+                        (ngModelChange)="setRestockDate(resource.id, $event)"
+                        [disabled]="busyResourceId() === resource.id"
+                      />
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    class="restock-button"
+                    (click)="restock(resource)"
+                    [disabled]="busyResourceId() !== null"
+                  >
+                    {{
+                      busyResourceId() === resource.id ? 'Wird gebucht…' : 'Nachbestellung buchen'
+                    }}
+                  </button>
+                </div>
+
+                <div class="movement-controls settings-controls">
+                  <strong>Lagereinstellungen &amp; Preise</strong>
+                  <div class="settings-grid">
+                    <label>
+                      Regalnummer
+                      <input
+                        type="text"
+                        maxlength="30"
+                        [ngModel]="restockShelves()[resource.id]"
+                        (ngModelChange)="setRestockShelf(resource.id, $event)"
+                        placeholder="R-02"
+                        [disabled]="busyResourceId() === resource.id"
+                      />
+                    </label>
+                    <label>
+                      Fachnummer
+                      <input
+                        type="text"
+                        maxlength="30"
+                        [ngModel]="restockBins()[resource.id]"
+                        (ngModelChange)="setRestockBin(resource.id, $event)"
+                        placeholder="F-04"
+                        [disabled]="busyResourceId() === resource.id"
+                      />
+                    </label>
+                    <label>
+                      Meldebestand
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        [ngModel]="reorderThresholds()[resource.id]"
+                        (ngModelChange)="setReorderThreshold(resource.id, $event)"
+                        [disabled]="busyResourceId() === resource.id"
+                      />
+                    </label>
+                    <label>
+                      WHS-Preis (€)
+                      <input
+                        type="text"
+                        inputmode="decimal"
+                        [ngModel]="wholesalePrices()[resource.id]"
+                        (ngModelChange)="setWholesalePrice(resource.id, $event)"
+                        placeholder="24,50"
+                        [disabled]="busyResourceId() === resource.id"
+                      />
+                    </label>
+                    <label>
+                      RT-Preis (€)
+                      <input
+                        type="text"
+                        inputmode="decimal"
+                        [ngModel]="retailPrices()[resource.id]"
+                        (ngModelChange)="setRetailPrice(resource.id, $event)"
+                        placeholder="79,99"
+                        [disabled]="busyResourceId() === resource.id"
+                      />
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    class="settings-button"
+                    (click)="saveInventorySettings(resource)"
+                    [disabled]="busyResourceId() !== null"
+                  >
+                    {{
+                      busyResourceId() === resource.id
+                        ? 'Wird gespeichert…'
+                        : 'Lagerdaten & Preise speichern'
+                    }}
+                  </button>
+                </div>
+
+                @if (rowMessages()[resource.id]) {
+                  <p class="row-message row-message--success" role="status">
+                    {{ rowMessages()[resource.id] }}
+                  </p>
+                }
+                @if (rowErrors()[resource.id]) {
+                  <p class="row-message row-message--error" role="alert">
+                    {{ rowErrors()[resource.id] }}
+                  </p>
+                }
+
+                <footer>
+                  <small>Angelegt {{ resource.created_at | date: 'dd.MM.yyyy HH:mm' }}</small>
+                  <button
+                    type="button"
+                    class="delete-button"
+                    (click)="deleteResource(resource)"
+                    [disabled]="busyResourceId() !== null"
+                  >
+                    Artikel löschen
+                  </button>
+                </footer>
+              </article>
+            }
+          </div>
+        </section>
+
+        <aside class="sales-panel" aria-labelledby="recent-movements-title">
+          <header>
+            <span class="eyebrow">AKTIVITÄT</span>
+            <h2 id="recent-movements-title">Lagerbewegungen</h2>
+          </header>
+
+          @if (movementsLoading()) {
+            <p class="empty-state">Lagerbewegungen werden geladen…</p>
+          } @else if (movementsError()) {
+            <p class="empty-state empty-state--error" role="alert">{{ movementsError() }}</p>
+          } @else if (recentMovements().length === 0) {
+            <p class="empty-state">Noch keine Lagerbewegungen registriert.</p>
+          }
+
+          <ol>
+            @for (movement of recentMovements(); track movement.id) {
+              <li>
+                <span
+                  class="sale-quantity"
+                  [class.sale-quantity--restock]="movement.movement_type !== 'sale'"
+                >
+                  {{ movement.movement_type === 'sale' ? '−' : '+' }}{{ movement.quantity }}
+                </span>
+                <div>
+                  <strong>{{ movement.resource_name }}</strong>
+                  <span>{{ movement.stock_before }} → {{ movement.stock_after }} Stück</span>
+                  <small>
+                    {{ movement.movement_type_label }} · {{ movement.performed_by_username }} ·
+                    {{ movement.occurred_at | date: 'dd.MM.yyyy HH:mm' }}
+                  </small>
+                </div>
+              </li>
+            }
+          </ol>
+        </aside>
+      </div>
+    }
+  </section>
+</main>

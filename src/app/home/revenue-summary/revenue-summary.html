@@ -1,0 +1,44 @@
+<section class="revenue-card" aria-labelledby="revenue-title">
+  <header>
+    <div>
+      <span class="revenue-eyebrow">Umsatz</span>
+      <h2 id="revenue-title">Gesamtumsatz</h2>
+      <p>Historische Quartalsdaten und alle in der App registrierten Verkäufe</p>
+    </div>
+    <div class="revenue-total">
+      @if (loading()) {
+        <strong>…</strong>
+      } @else if (error()) {
+        <strong>—</strong>
+        <small class="alert">{{ error() }}</small>
+      } @else {
+        <strong>{{ formatPrice(report()?.total_revenue) }}</strong>
+        <small>
+          {{ revenuePeriod() }} ·
+          {{ (report()?.total_units ?? 0).toLocaleString('de-DE') }} verkaufte Stück
+        </small>
+      }
+    </div>
+  </header>
+
+  @if (revenueYears().length > 0) {
+    <ol class="revenue-years">
+      @for (year of revenueYears(); track year.year) {
+        <li>
+          <span class="revenue-year">{{ year.year }}</span>
+          <div class="revenue-bar" aria-hidden="true">
+            <span
+              [class.revenue-bar--live]="year.source !== 'historical'"
+              [style.width.%]="year.share"
+            ></span>
+          </div>
+          <strong>{{ formatPrice(year.revenue) }}</strong>
+          <small>
+            {{ year.units.toLocaleString('de-DE') }} Stück ·
+            {{ sourceLabels[year.source] }}
+          </small>
+        </li>
+      }
+    </ol>
+  }
+</section>
