@@ -63,7 +63,7 @@ h2 {
 
 table {
   width: 100%;
-  min-width: 760px;
+  min-width: 980px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -134,6 +134,12 @@ td:first-child {
 .low-stock {
   color: var(--pink-dark);
   font-weight: 850;
+}
+
+.missing-location {
+  color: var(--pink-dark);
+  font-size: 10px;
+  font-weight: 750;
 }
 
 .inventory-state td {

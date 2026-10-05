@@ -6,7 +6,7 @@
       <div>
         <span class="workspace-eyebrow">Analyse</span>
         <h1>Verkaufsreport</h1>
-        <p>Quartale, Umsatz und stärkste Kategorien übersichtlich ausgewertet.</p>
+        <p>Auswertung ausschließlich aus den tatsächlich registrierten Verkäufen.</p>
       </div>
       <app-user-session />
     </header>
@@ -14,26 +14,20 @@
     <section class="workspace-summary" aria-label="Analysekennzahlen">
       <article>
         <span>Verkaufte Artikel</span>
-        <strong>{{ loading() ? '…' : latestYearUnits().toLocaleString('de-DE') }}</strong>
-        <small>{{ latestYear() ?? 'keine Daten' }}</small>
+        <strong>{{ loading() ? '…' : soldUnits().toLocaleString('de-DE') }}</strong>
+        <small>über alle echten Buchungen</small>
       </article>
       <article>
-        <span>Umsatz</span>
-        <strong>{{ loading() ? '…' : formatCurrency(latestYearRevenue()) }}</strong>
-        <small>{{ latestYear() ?? 'keine Daten' }}</small>
+        <span>Verkaufsbuchungen</span>
+        <strong>{{ loading() ? '…' : sales().length.toLocaleString('de-DE') }}</strong>
+        <small>mit Benutzer und Zeitstempel</small>
       </article>
       <article>
-        <span>Wachstum</span>
-        <strong>
-          @if (loading()) {
-            …
-          } @else if (growth() !== null) {
-            {{ growth()! >= 0 ? '+' : '' }}{{ growth()!.toFixed(1) }} %
-          } @else {
-            —
-          }
-        </strong>
-        <small>zum Vorjahr</small>
+        <span>Letzter Verkauf</span>
+        <strong>{{
+          latestSale()?.sold_at ? (latestSale()!.sold_at | date: 'dd.MM.yyyy') : '—'
+        }}</strong>
+        <small>{{ latestSale()?.resource_name ?? 'noch keine Daten' }}</small>
       </article>
     </section>
 
@@ -41,7 +35,7 @@
       <p class="analysis-state">Auswertung wird geladen…</p>
     } @else if (error()) {
       <p class="analysis-state analysis-state--error" role="alert">{{ error() }}</p>
-    } @else if (salesData().length === 0) {
+    } @else if (sales().length === 0) {
       <p class="analysis-state">Noch keine Verkaufsdaten vorhanden.</p>
     } @else {
       <section class="analysis-grid">
@@ -49,7 +43,7 @@
           <header class="sales-header">
             <div>
               <h2>Verkaufsdaten</h2>
-              <p>Quartalsentwicklung über alle gespeicherten Jahre</p>
+              <p>Quartalsentwicklung aus registrierten Verkäufen</p>
             </div>
             <span class="live-badge">{{ chartPoints().length }} Quartale</span>
           </header>
@@ -82,24 +76,27 @@
         <article class="products-card">
           <header>
             <span class="workspace-eyebrow">Ranking</span>
-            <h2>Meistverkaufte Kategorien</h2>
-            <p>Gesamtübersicht aller Verkaufsdaten</p>
+            <h2>Artikel im Vergleich</h2>
+            <p>Von stark verkauft bis bisher ohne Verkauf</p>
           </header>
           <ol>
-            @for (category of categorySummaries(); track category.name; let rank = $index) {
+            @for (product of productSummaries(); track product.name; let rank = $index) {
               <li>
                 <span [class]="'rank rank--' + categoryTones[rank % categoryTones.length]">
                   {{ rank + 1 }}
                 </span>
                 <div class="category-copy">
                   <div>
-                    <strong>{{ category.name }}</strong>
-                    <span>{{ category.units.toLocaleString('de-DE') }} Stück</span>
+                    <strong>{{ product.name }}</strong>
+                    <span>{{ product.units.toLocaleString('de-DE') }} Stück</span>
                   </div>
                   <div class="category-progress" aria-hidden="true">
-                    <span [style.width.%]="category.share"></span>
+                    <span [style.width.%]="product.share"></span>
                   </div>
-                  <small>{{ formatCurrency(category.revenue) }} Umsatz</small>
+                  <small>
+                    {{ product.category }} ·
+                    {{ product.units === 0 ? 'noch nicht verkauft' : 'registrierte Verkäufe' }}
+                  </small>
                 </div>
               </li>
             }

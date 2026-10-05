@@ -1,6 +1,7 @@
+import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { finalize } from 'rxjs';
-import { SalesData } from '../models/resource.model';
+import { InventorySale, Resource } from '../models/resource.model';
 import { ResourceService } from '../services/resource.service';
 import { NavigationSidebarComponent } from '../shared/navigation-sidebar/navigation-sidebar';
 import { UserSessionComponent } from '../shared/user-session/user-session';
@@ -8,51 +9,38 @@ import { UserSessionComponent } from '../shared/user-session/user-session';
 @Component({
   selector: 'app-analysis',
   standalone: true,
-  imports: [NavigationSidebarComponent, UserSessionComponent],
+  imports: [DatePipe, NavigationSidebarComponent, UserSessionComponent],
   templateUrl: './analysis.html',
   styleUrl: './analysis.scss',
 })
 export class AnalysisComponent implements OnInit {
   private readonly resourceService = inject(ResourceService);
 
-  protected readonly salesData = signal<SalesData[]>([]);
-  protected readonly loading = signal(true);
-  protected readonly error = signal('');
+  protected readonly resources = signal<Resource[]>([]);
+  protected readonly sales = signal<InventorySale[]>([]);
+  protected readonly resourcesLoading = signal(true);
+  protected readonly salesLoading = signal(true);
+  protected readonly resourceError = signal('');
+  protected readonly salesError = signal('');
   protected readonly categoryTones = ['pink', 'cyan', 'orange', 'violet'] as const;
 
-  protected readonly latestYear = computed(() => {
-    const years = this.salesData().map((entry) => entry.year);
-    return years.length ? Math.max(...years) : null;
-  });
-  protected readonly latestYearSales = computed(() => {
-    const latestYear = this.latestYear();
-    return latestYear === null ? [] : this.salesData().filter((entry) => entry.year === latestYear);
-  });
-  protected readonly latestYearUnits = computed(() =>
-    this.latestYearSales().reduce((total, entry) => total + entry.units_sold, 0),
+  protected readonly loading = computed(() => this.resourcesLoading() || this.salesLoading());
+  protected readonly error = computed(() => this.resourceError() || this.salesError());
+  protected readonly soldUnits = computed(() =>
+    this.sales().reduce((total, sale) => total + sale.quantity, 0),
   );
-  protected readonly latestYearRevenue = computed(() =>
-    this.latestYearSales().reduce((total, entry) => total + Number(entry.revenue), 0),
-  );
-  protected readonly growth = computed(() => {
-    const latestYear = this.latestYear();
-    if (latestYear === null) return null;
+  protected readonly latestSale = computed(() => this.sales()[0] ?? null);
 
-    const previousYearUnits = this.salesData()
-      .filter((entry) => entry.year === latestYear - 1)
-      .reduce((total, entry) => total + entry.units_sold, 0);
-
-    return previousYearUnits
-      ? ((this.latestYearUnits() - previousYearUnits) / previousYearUnits) * 100
-      : null;
-  });
   protected readonly chartPoints = computed(() => {
     const periods = new Map<string, { year: number; quarter: number; units: number }>();
 
-    for (const entry of this.salesData()) {
-      const key = `${entry.year}-${entry.quarter}`;
-      const period = periods.get(key) ?? { year: entry.year, quarter: entry.quarter, units: 0 };
-      period.units += entry.units_sold;
+    for (const sale of this.sales()) {
+      const soldAt = new Date(sale.sold_at);
+      const year = soldAt.getFullYear();
+      const quarter = Math.floor(soldAt.getMonth() / 3) + 1;
+      const key = `${year}-${quarter}`;
+      const period = periods.get(key) ?? { year, quarter, units: 0 };
+      period.units += sale.quantity;
       periods.set(key, period);
     }
 
@@ -69,42 +57,57 @@ export class AnalysisComponent implements OnInit {
       tone: tones[Math.max(0, years.indexOf(point.year)) % tones.length],
     }));
   });
-  protected readonly categorySummaries = computed(() => {
-    const categories = new Map<string, { units: number; revenue: number }>();
 
-    for (const entry of this.salesData()) {
-      const category = categories.get(entry.category_name) ?? { units: 0, revenue: 0 };
-      category.units += entry.units_sold;
-      category.revenue += Number(entry.revenue);
-      categories.set(entry.category_name, category);
+  protected readonly productSummaries = computed(() => {
+    const products = new Map<
+      string,
+      { name: string; category: string; units: number; inStock: boolean }
+    >();
+
+    for (const resource of this.resources()) {
+      products.set(resource.name, {
+        name: resource.name,
+        category: resource.category_name,
+        units: 0,
+        inStock: true,
+      });
     }
 
-    const maximum = Math.max(...[...categories.values()].map((category) => category.units), 1);
+    for (const sale of this.sales()) {
+      const product = products.get(sale.resource_name) ?? {
+        name: sale.resource_name,
+        category: sale.category_name,
+        units: 0,
+        inStock: false,
+      };
+      product.units += sale.quantity;
+      products.set(sale.resource_name, product);
+    }
 
-    return [...categories.entries()]
-      .map(([name, summary]) => ({
-        name,
-        ...summary,
-        share: Math.round((summary.units / maximum) * 100),
+    const maximum = Math.max(...[...products.values()].map((product) => product.units), 1);
+    return [...products.values()]
+      .map((product) => ({
+        ...product,
+        share: Math.round((product.units / maximum) * 100),
       }))
       .sort((first, second) => second.units - first.units || first.name.localeCompare(second.name));
   });
 
   ngOnInit(): void {
     this.resourceService
-      .getSalesData()
-      .pipe(finalize(() => this.loading.set(false)))
+      .getAll()
+      .pipe(finalize(() => this.resourcesLoading.set(false)))
       .subscribe({
-        next: (salesData) => this.salesData.set(salesData),
-        error: () => this.error.set('Die Verkaufsdaten konnten nicht geladen werden.'),
+        next: (resources) => this.resources.set(resources),
+        error: () => this.resourceError.set('Die Artikel konnten nicht geladen werden.'),
       });
-  }
 
-  protected formatCurrency(value: number): string {
-    return new Intl.NumberFormat('de-DE', {
-      style: 'currency',
-      currency: 'EUR',
-      maximumFractionDigits: 0,
-    }).format(value);
+    this.resourceService
+      .getInventorySales()
+      .pipe(finalize(() => this.salesLoading.set(false)))
+      .subscribe({
+        next: (sales) => this.sales.set(sales),
+        error: () => this.salesError.set('Die Verkaufsdaten konnten nicht geladen werden.'),
+      });
   }
 }

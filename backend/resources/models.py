@@ -29,6 +29,10 @@ class resources(models.Model):
     category = models.ForeignKey(Category, on_delete=models.PROTECT)
     manufacturer = models.ForeignKey(Manufacturer, on_delete=models.PROTECT)
     gender = models.ForeignKey(Gender, on_delete=models.PROTECT)
+    shelf_number = models.CharField(max_length=30, blank=True, default='')
+    bin_number = models.CharField(max_length=30, blank=True, default='')
+    reorder_threshold = models.PositiveIntegerField(default=5)
+    purchase_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -110,3 +114,59 @@ class InventorySale(models.Model):
 
     def __str__(self):
         return f'{self.resource_name} · {self.quantity} verkauft'
+
+
+class StockMovement(models.Model):
+    class MovementType(models.TextChoices):
+        SALE = 'sale', 'Verkauf'
+        RESTOCK = 'restock', 'Nachbestellung'
+
+    resource = models.ForeignKey(
+        resources,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='stock_movements',
+    )
+    resource_name = models.CharField(max_length=200)
+    movement_type = models.CharField(max_length=20, choices=MovementType.choices)
+    quantity = models.PositiveIntegerField()
+    stock_before = models.PositiveIntegerField()
+    stock_after = models.PositiveIntegerField()
+    purchase_date = models.DateField(null=True, blank=True)
+    performed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='stock_movements',
+    )
+    occurred_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-occurred_at']
+        indexes = [
+            models.Index(fields=['movement_type', '-occurred_at'], name='movement_type_date_idx'),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(quantity__gt=0),
+                name='stock_movement_quantity_positive',
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(
+                        movement_type='sale',
+                        stock_after=models.F('stock_before') - models.F('quantity'),
+                    )
+                    | models.Q(
+                        movement_type='restock',
+                        stock_after=models.F('stock_before') + models.F('quantity'),
+                    )
+                ),
+                name='stock_movement_amount_consistent',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.resource_name} · {self.get_movement_type_display()} · {self.quantity}'

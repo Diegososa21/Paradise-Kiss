@@ -6,10 +6,14 @@ import {
   CreateResource,
   Gender,
   InventorySale,
+  InventorySettings,
   Manufacturer,
+  RestockResource,
+  RestockResourceResponse,
   Resource,
   SalesData,
   SellResourceResponse,
+  StockMovement,
 } from '../models/resource.model';
 
 @Injectable({
@@ -34,6 +38,20 @@ export class ResourceService {
     });
   }
 
+  restock(resourceId: number, restock: RestockResource): Observable<RestockResourceResponse> {
+    return this.http.post<RestockResourceResponse>(
+      `${this.baseUrl}/resources/${resourceId}/restock/`,
+      restock,
+    );
+  }
+
+  updateInventorySettings(resourceId: number, settings: InventorySettings): Observable<Resource> {
+    return this.http.patch<Resource>(
+      `${this.baseUrl}/resources/${resourceId}/inventory-settings/`,
+      settings,
+    );
+  }
+
   delete(resourceId: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/resources/${resourceId}/`);
   }
@@ -56,5 +74,9 @@ export class ResourceService {
 
   getInventorySales(): Observable<InventorySale[]> {
     return this.http.get<InventorySale[]>(`${this.baseUrl}/inventory-sales/`);
+  }
+
+  getStockMovements(): Observable<StockMovement[]> {
+    return this.http.get<StockMovement[]>(`${this.baseUrl}/stock-movements/`);
   }
 }

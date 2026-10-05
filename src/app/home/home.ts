@@ -1,7 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
-import { Resource, SalesData } from '../models/resource.model';
+import { InventorySale, Resource } from '../models/resource.model';
 import { ResourceService } from '../services/resource.service';
 import { NavigationSidebarComponent } from '../shared/navigation-sidebar/navigation-sidebar';
 import { UserSessionComponent } from '../shared/user-session/user-session';
@@ -17,29 +17,15 @@ export class HomeComponent implements OnInit {
   private readonly resourceService = inject(ResourceService);
 
   protected readonly resources = signal<Resource[]>([]);
-  protected readonly salesData = signal<SalesData[]>([]);
+  protected readonly sales = signal<InventorySale[]>([]);
   protected readonly loading = signal(true);
   protected readonly salesLoading = signal(true);
   protected readonly resourceError = signal('');
   protected readonly salesError = signal('');
   protected readonly itemTones = ['pink', 'orange', 'yellow'] as const;
 
-  protected readonly latestSalesYear = computed(() => {
-    const years = this.salesData().map((entry) => entry.year);
-    return years.length ? Math.max(...years) : null;
-  });
-
-  protected readonly latestYearSales = computed(() => {
-    const latestYear = this.latestSalesYear();
-    return latestYear === null ? [] : this.salesData().filter((entry) => entry.year === latestYear);
-  });
-
-  protected readonly latestYearUnits = computed(() =>
-    this.latestYearSales().reduce((total, entry) => total + entry.units_sold, 0),
-  );
-
-  protected readonly latestYearRevenue = computed(() =>
-    this.latestYearSales().reduce((total, entry) => total + Number(entry.revenue), 0),
+  protected readonly soldUnits = computed(() =>
+    this.sales().reduce((total, sale) => total + sale.quantity, 0),
   );
 
   protected readonly kpis = computed(() => [
@@ -55,15 +41,13 @@ export class HomeComponent implements OnInit {
       alert: Boolean(this.resourceError()),
     },
     {
-      label: 'Umsatz',
+      label: 'Buchungen',
       value: this.salesLoading()
         ? '…'
         : this.salesError()
           ? '—'
-          : this.formatCurrency(this.latestYearRevenue()),
-      meta: this.salesError()
-        ? 'Backend offline'
-        : (this.latestSalesYear()?.toString() ?? 'keine Daten'),
+          : this.sales().length.toLocaleString('de-DE'),
+      meta: this.salesError() ? 'Backend offline' : 'echte Verkäufe',
       tone: 'blue',
       alert: Boolean(this.salesError()),
     },
@@ -74,11 +58,13 @@ export class HomeComponent implements OnInit {
         : this.resourceError()
           ? '—'
           : this.resources()
-              .filter((resource) => resource.amount <= 5)
+              .filter((resource) => resource.amount <= resource.reorder_threshold)
               .length.toLocaleString('de-DE'),
-      meta: this.resourceError() ? 'Backend offline' : '5 oder weniger',
+      meta: this.resourceError() ? 'Backend offline' : 'Meldeschwelle erreicht',
       tone: 'orange',
-      alert: !this.resourceError() && this.resources().some((resource) => resource.amount <= 5),
+      alert:
+        !this.resourceError() &&
+        this.resources().some((resource) => resource.amount <= resource.reorder_threshold),
     },
     {
       label: 'Verkauft',
@@ -86,8 +72,8 @@ export class HomeComponent implements OnInit {
         ? '…'
         : this.salesError()
           ? '—'
-          : this.latestYearUnits().toLocaleString('de-DE'),
-      meta: this.salesError() ? 'Backend offline' : `${this.latestSalesYear() ?? '—'} · Stück`,
+          : this.soldUnits().toLocaleString('de-DE'),
+      meta: this.salesError() ? 'Backend offline' : 'aus Verkaufsbuchungen',
       tone: 'cyan',
       alert: Boolean(this.salesError()),
     },
@@ -109,19 +95,11 @@ export class HomeComponent implements OnInit {
       });
 
     this.resourceService
-      .getSalesData()
+      .getInventorySales()
       .pipe(finalize(() => this.salesLoading.set(false)))
       .subscribe({
-        next: (salesData) => this.salesData.set(salesData),
+        next: (sales) => this.sales.set(sales),
         error: () => this.salesError.set('Die Verkaufsdaten konnten nicht geladen werden.'),
       });
-  }
-
-  protected formatCurrency(value: number): string {
-    return new Intl.NumberFormat('de-DE', {
-      style: 'currency',
-      currency: 'EUR',
-      maximumFractionDigits: 0,
-    }).format(value);
   }
 }

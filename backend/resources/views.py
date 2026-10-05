@@ -69,6 +69,69 @@ class ResourceViewSet(
         ))
 
 
+    @action(detail=True, methods=['patch'], url_path='inventory-settings')
+    def inventory_settings(self, request, pk=None):
+        input_serializer = InventorySettingsSerializer(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+
+        with transaction.atomic():
+            try:
+                resource = (
+                    resources.objects.select_for_update()
+                    .select_related('category', 'manufacturer', 'gender')
+                    .get(pk=pk)
+                )
+            except resources.DoesNotExist as error:
+                raise NotFound('Der Artikel wurde nicht gefunden.') from error
+
+            update_fields = []
+            previous_values = {
+                field_name: getattr(resource, field_name)
+                for field_name in input_serializer.validated_data
+            }
+            for field_name, value in input_serializer.validated_data.items():
+                setattr(resource, field_name, value)
+                update_fields.append(field_name)
+
+            resource.save(update_fields=update_fields)
+            field_labels = {
+                'shelf_number': 'Regalnummer',
+                'bin_number': 'Fachnummer',
+                'reorder_threshold': 'Meldebestand',
+            }
+            changed_values = ', '.join(
+                f'{field_labels[field_name]}: {previous_values[field_name] or "—"} → '
+                f'{getattr(resource, field_name) or "—"}'
+                for field_name in update_fields
+            )
+            schedule_inventory_notification(
+                event='update',
+                resource_name=resource.name,
+                actor=request.user,
+                details={'Änderungen': changed_values},
+            )
+
+        return Response(ResourceSerializer(resource).data)
+
+    def destroy(self, request, *args, **kwargs):
+        with transaction.atomic():
+            resource = self.get_object()
+            resource_name = resource.name
+            resource_amount = resource.amount
+            resource_location = f'{resource.shelf_number or "—"} / {resource.bin_number or "—"}'
+            resource.delete()
+            schedule_inventory_notification(
+                event='delete',
+                resource_name=resource_name,
+                actor=request.user,
+                details={
+                    'Letzter Bestand': resource_amount,
+                    'Letzter Lagerplatz': resource_location,
+                },
+            )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 class ManufacturerViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
     queryset = Manufacturer.objects.order_by("name")
     serializer_class = ManufacturerSerializer

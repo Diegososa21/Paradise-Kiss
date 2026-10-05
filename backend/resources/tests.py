@@ -1,18 +1,36 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core import mail
+from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .models import Category, Gender, InventorySale, Manufacturer, SalesData, resources
+from .models import (
+    Category,
+    Gender,
+    InventorySale,
+    Manufacturer,
+    SalesData,
+    StockMovement,
+    resources,
+)
 
 
 class ResourceApiTests(APITestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
             username='sosa.diego',
+            email='diego@example.com',
             password='A-secure-test-password-2026!',
         )
-        self.user.groups.add(Group.objects.create(name='team'))
+        self.team_group = Group.objects.create(name='team')
+        self.user.groups.add(self.team_group)
+        self.teammate = get_user_model().objects.create_user(
+            username='friedrich.nico',
+            email='nico@example.com',
+            password='A-secure-test-password-2026!',
+        )
+        self.teammate.groups.add(self.team_group)
         self.client.force_authenticate(user=self.user)
         self.category = Category.objects.create(name='Jackets')
         self.gender = Gender.objects.create(name='Unisex')
@@ -29,6 +47,10 @@ class ResourceApiTests(APITestCase):
             'manufacturer': self.manufacturer,
             'material': 'Denim',
             'gender': self.gender,
+            'shelf_number': 'R-02',
+            'bin_number': 'F-04',
+            'reorder_threshold': 6,
+            'purchase_date': '2026-10-05',
         }
 
     def api_payload(self):
@@ -66,6 +88,10 @@ class ResourceApiTests(APITestCase):
         self.assertEqual(response.data['category_name'], 'Jackets')
         self.assertEqual(response.data['manufacturer_name'], 'Paradise Kiss')
         self.assertEqual(response.data['material'], 'Denim')
+        self.assertEqual(response.data['shelf_number'], 'R-02')
+        self.assertEqual(response.data['bin_number'], 'F-04')
+        self.assertEqual(response.data['reorder_threshold'], 6)
+        self.assertEqual(response.data['purchase_date'], '2026-10-05')
 
     def test_rejects_negative_amount(self):
         payload = self.api_payload()
@@ -105,6 +131,83 @@ class ResourceApiTests(APITestCase):
         self.assertEqual(sale.stock_before, 300)
         self.assertEqual(sale.stock_after, 150)
         self.assertEqual(sale.sold_by, self.user)
+        movement = StockMovement.objects.get()
+        self.assertEqual(movement.movement_type, StockMovement.MovementType.SALE)
+        self.assertEqual(movement.quantity, 150)
+        self.assertEqual(movement.stock_after, 150)
+        self.assertEqual(response.data['movement']['movement_type'], 'sale')
+        self.assertEqual(response.data['movement']['performed_by_username'], 'sosa.diego')
+
+    def test_restocks_resource_and_records_purchase_and_location(self):
+        self.resource_data['amount'] = 150
+        resource = resources.objects.create(**self.resource_data)
+
+        response = self.client.post(
+            f'/tables/resources/{resource.id}/restock/',
+            {
+                'quantity': 75,
+                'purchase_date': '2026-10-06',
+                'shelf_number': 'R-07',
+                'bin_number': 'F-02',
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        resource.refresh_from_db()
+        self.assertEqual(resource.amount, 225)
+        self.assertEqual(str(resource.purchase_date), '2026-10-06')
+        self.assertEqual(resource.shelf_number, 'R-07')
+        self.assertEqual(resource.bin_number, 'F-02')
+        movement = StockMovement.objects.get()
+        self.assertEqual(movement.movement_type, StockMovement.MovementType.RESTOCK)
+        self.assertEqual(movement.stock_before, 150)
+        self.assertEqual(movement.stock_after, 225)
+        self.assertEqual(movement.performed_by, self.user)
+
+    def test_rejects_zero_quantity_restock(self):
+        resource = resources.objects.create(**self.resource_data)
+
+        response = self.client.post(
+            f'/tables/resources/{resource.id}/restock/',
+            {'quantity': 0},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(StockMovement.objects.count(), 0)
+
+    def test_updates_inventory_settings_without_changing_stock(self):
+        resource = resources.objects.create(**self.resource_data)
+
+        response = self.client.patch(
+            f'/tables/resources/{resource.id}/inventory-settings/',
+            {
+                'shelf_number': 'R-11',
+                'bin_number': 'F-08',
+                'reorder_threshold': 12,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        resource.refresh_from_db()
+        self.assertEqual(resource.amount, 4)
+        self.assertEqual(resource.shelf_number, 'R-11')
+        self.assertEqual(resource.bin_number, 'F-08')
+        self.assertEqual(resource.reorder_threshold, 12)
+        self.assertEqual(StockMovement.objects.count(), 0)
+
+    def test_rejects_empty_inventory_settings_update(self):
+        resource = resources.objects.create(**self.resource_data)
+
+        response = self.client.patch(
+            f'/tables/resources/{resource.id}/inventory-settings/',
+            {},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_rejects_sale_larger_than_available_stock(self):
         resource = resources.objects.create(**self.resource_data)
@@ -148,6 +251,9 @@ class ResourceApiTests(APITestCase):
         self.assertIsNone(sale.resource)
         self.assertEqual(sale.resource_name, 'Denim jacket')
         self.assertEqual(sale.category_name, 'Jackets')
+        movement = StockMovement.objects.get()
+        self.assertIsNone(movement.resource)
+        self.assertEqual(movement.resource_name, 'Denim jacket')
 
     def test_lists_inventory_sales(self):
         resource = resources.objects.create(**self.resource_data)
@@ -163,6 +269,21 @@ class ResourceApiTests(APITestCase):
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]['quantity'], 2)
         self.assertEqual(response.data[0]['sold_by_username'], 'sosa.diego')
+
+    def test_lists_stock_movements(self):
+        resource = resources.objects.create(**self.resource_data)
+        self.client.post(
+            f'/tables/resources/{resource.id}/restock/',
+            {'quantity': 3, 'purchase_date': '2026-10-06'},
+            format='json',
+        )
+
+        response = self.client.get('/tables/stock-movements/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['movement_type'], 'restock')
+        self.assertEqual(response.data[0]['performed_by_username'], 'sosa.diego')
 
     def test_lists_quarterly_sales_data(self):
         SalesData.objects.create(
@@ -194,3 +315,49 @@ class ResourceApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        INVENTORY_EMAIL_NOTIFICATIONS_ENABLED=True,
+        DEFAULT_FROM_EMAIL='lager@example.com',
+    )
+    def test_notifies_every_team_email_after_inventory_changes(self):
+        mail.outbox.clear()
+        resource = resources.objects.create(**self.resource_data)
+
+        with self.captureOnCommitCallbacks(execute=True):
+            sale_response = self.client.post(
+                f'/tables/resources/{resource.id}/sell/',
+                {'quantity': 1},
+                format='json',
+            )
+        with self.captureOnCommitCallbacks(execute=True):
+            restock_response = self.client.post(
+                f'/tables/resources/{resource.id}/restock/',
+                {'quantity': 2, 'purchase_date': '2026-10-06'},
+                format='json',
+            )
+        with self.captureOnCommitCallbacks(execute=True):
+            update_response = self.client.patch(
+                f'/tables/resources/{resource.id}/inventory-settings/',
+                {'reorder_threshold': 10},
+                format='json',
+            )
+        with self.captureOnCommitCallbacks(execute=True):
+            delete_response = self.client.delete(f'/tables/resources/{resource.id}/')
+
+        self.assertEqual(sale_response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(restock_response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(update_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(mail.outbox), 8)
+        self.assertEqual(
+            {message.to[0] for message in mail.outbox},
+            {'diego@example.com', 'nico@example.com'},
+        )
+        subjects = [message.subject for message in mail.outbox]
+        self.assertTrue(any('Verkauf gebucht' in subject for subject in subjects))
+        self.assertTrue(any('Nachbestellung gebucht' in subject for subject in subjects))
+        self.assertTrue(any('Artikel aktualisiert' in subject for subject in subjects))
+        self.assertTrue(any('Artikel gelöscht' in subject for subject in subjects))
+        self.assertIn('Ausgeführt von: sosa.diego', mail.outbox[0].body)

@@ -29,6 +29,10 @@ describe('SalesComponent', () => {
     manufacturer_name: 'Paradise Textiles',
     gender: 1,
     gender_name: 'Unisex',
+    shelf_number: 'R-02',
+    bin_number: 'F-04',
+    reorder_threshold: 5,
+    purchase_date: '2026-10-01',
     created_at: '2026-10-05T08:00:00Z',
   };
 
