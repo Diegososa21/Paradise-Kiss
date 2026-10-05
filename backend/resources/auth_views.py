@@ -26,7 +26,7 @@ def _is_approved(user):
     return bool(
         user
         and user.is_active
-        and user.username.lower() in settings.APP_ALLOWED_USERNAMES
+        and user.groups.filter(name='team').exists()
     )
 
 
@@ -71,7 +71,7 @@ def sign_in(request):
 
     username = str(payload.get('username', '')).strip().lower()
     password = str(payload.get('password', ''))
-    if username not in settings.APP_ALLOWED_USERNAMES or not password:
+    if not username or not password:
         return JsonResponse({'detail': 'Benutzername oder Passwort ist falsch.'}, status=400)
 
     existing_user = User.objects.filter(username__iexact=username, is_active=True).first()
