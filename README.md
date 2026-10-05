@@ -235,20 +235,15 @@ npm run build
 
 ## Producción en Vercel
 
-`vercel.json` define dos servicios: Angular en `/` y Django en `/api`. En el
-proyecto de Vercel hay que seleccionar el Framework Preset `Services` y añadir
-estas variables de entorno:
+`vercel.json` define dos servicios en un solo proyecto: Angular (`frontend`) en `/`
+y Django (`api`) en `/api`. Vercel quita el prefijo `/api` antes de llegar a
+Django, y las funciones corren en Dublín (`dub1`), junto a Supabase.
 
-- `DATABASE_URL`
-- `DJANGO_SECRET_KEY`
-- `DJANGO_ALLOWED_HOSTS`
-- `DJANGO_CORS_ALLOWED_ORIGINS`
-- `DJANGO_CSRF_TRUSTED_ORIGINS`
-- `FRONTEND_URL`
-- `DB_POOL_MODE=transaction`
-- `DB_CONN_MAX_AGE=0`
+Variables necesarias en Vercel: `POSTGRES_URL` (de la integración Supabase–Vercel)
+y `DJANGO_SECRET_KEY`. Opcionales: `GEMINI_API_KEY` (KI-Assistent) y las de correo.
 
-La contraseña que estuvo escrita en `Sandbox` debe rotarse antes de desplegar.
+Detalles, causa del fallo de despliegue de septiembre/octubre de 2026 y cómo
+comprobar un despliegue: [docs/despliegue-vercel.md](docs/despliegue-vercel.md).
 
 ## Development server
 
