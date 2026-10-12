@@ -149,6 +149,56 @@ directly:
 python manage.py changepassword sosa.diego
 ```
 
+### Accessing Django (API and admin panel)
+
+Django has two entry points. Both need the backend to be running.
+
+**1. Browsable API (Django REST framework)**
+
+Sessions are stored per address: the one created in the app (`localhost:4200`)
+does not exist on `127.0.0.1:8000`. That is why opening
+`http://127.0.0.1:8000/tables/` directly always answers
+`403 Authentication credentials were not provided`; that is the protection
+working.
+
+To browse the API with your session:
+
+1. Sign in to the app: `http://localhost:4200`.
+2. In the same browser, open `http://localhost:4200/api/tables/`.
+
+From there you can navigate to `/api/tables/resources/`,
+`/api/tables/inventory-sales/`, `/api/tables/sales-report/`, etc. Only users of
+the `team` group have access.
+
+**2. Admin panel (`/admin/`)**
+
+Used to view and edit every table, user and group:
+`http://127.0.0.1:8000/admin/`.
+
+- Sign in with a **superuser** account, such as `admin`. Regular app accounts
+  (`sosa.diego`, `friedrich.nico`…) cannot open the admin panel, and `admin`
+  cannot sign in to the app.
+- The `admin` password is not stored in the repository. Ask the project owner
+  through a private channel. To set a new one:
+
+  ```bash
+  python manage.py changepassword admin
+  ```
+
+- To get your own admin account (recommended, so every change shows who made
+  it):
+
+  ```bash
+  python manage.py createsuperuser
+  ```
+
+**Careful:** the admin panel works directly on the shared Supabase database.
+Anything edited or deleted there changes the data for the whole team and for the
+published site.
+
+The admin panel is only used locally. On Vercel, `/api/admin/` loads but does
+not work, because Django builds its links and styles without the `/api` prefix.
+
 ### Frontend
 
 ```bash
@@ -215,6 +265,15 @@ notification to every active user with an e-mail address registered in the
 Supabase database (table `auth_user`). No addresses are hard-coded: to add or
 remove recipients, change the user's e-mail address.
 
+**Reorder alert (Meldebestand):** when a product's available stock reaches or
+falls below its reorder threshold (`stock ≤ threshold`, the same rule as "Niedriger
+Bestand" in the app), the team also receives a "Meldebestand erreicht" e-mail
+with the stock, the threshold, the GTIN, the location and the supplier. It is
+sent once, when the threshold is crossed (by a sale, by raising the threshold or
+by creating a product that is already low); further sales while it stays low do
+not repeat it. If the product is restocked above the threshold and drops again,
+the team is alerted again.
+
 In development, without SMTP settings, Django prints the e-mails in the backend
 terminal. For real delivery, configure SMTP in `backend/.env` and in the
 deployment's environment variables. Gmail only needs the account and an app
@@ -268,8 +327,9 @@ and Django (`api`) at `/api`. Vercel strips the `/api` prefix before the request
 reaches Django, and the functions run in Dublin (`dub1`), next to Supabase.
 
 Required variables on Vercel: `POSTGRES_URL` (from the Supabase–Vercel
-integration) and `DJANGO_SECRET_KEY`. Optional: `GEMINI_API_KEY`
-(KI-Assistent) and the e-mail settings.
+integration), `DJANGO_SECRET_KEY`, and `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD`
+(without them the inventory e-mails are only printed to the log). Optional:
+`GEMINI_API_KEY` (KI-Assistent).
 
 Details, the cause of the failed deployments in September/October 2026 and how
 to verify a deployment: [docs/despliegue-vercel.md](docs/despliegue-vercel.md)

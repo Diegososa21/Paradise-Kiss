@@ -17,6 +17,7 @@ EVENT_LABELS = {
     'restock': 'Nachbestellung gebucht',
     'update': 'Artikel aktualisiert',
     'delete': 'Artikel gelöscht',
+    'low_stock': 'Meldebestand erreicht',
 }
 
 
@@ -36,6 +37,38 @@ def registered_recipient_emails() -> list[str]:
         if '@' in email:
             unique_emails.setdefault(email.lower(), email)
     return list(unique_emails.values())
+
+
+def is_low_stock(amount: int, reorder_threshold: int) -> bool:
+    """Same rule as the app's "Niedriger Bestand": stock at or below the threshold."""
+    return amount <= reorder_threshold
+
+
+def schedule_low_stock_alert(*, resource, actor, was_low: bool) -> None:
+    """Alert the team once, when a product reaches or falls below its reorder threshold.
+
+    Only the transition counts: further sales while the product is already low
+    do not send another alert, otherwise every sold unit would mean an e-mail.
+    """
+    if was_low or not is_low_stock(resource.amount, resource.reorder_threshold):
+        return
+
+    available = f'{resource.amount} Stück'
+    if resource.amount == 0:
+        available += ' (ausverkauft)'
+    schedule_inventory_notification(
+        event='low_stock',
+        resource_name=resource.name,
+        actor=actor,
+        details={
+            'Verfügbar': available,
+            'Meldebestand': f'{resource.reorder_threshold} Stück',
+            'GTIN': resource.gtin or '—',
+            'Lagerplatz': f'{resource.shelf_number or "—"} / {resource.bin_number or "—"}',
+            'Lieferant': resource.manufacturer.name,
+            'Empfehlung': 'Bitte rechtzeitig nachbestellen.',
+        },
+    )
 
 
 def schedule_inventory_notification(
@@ -73,6 +106,15 @@ def _send_inventory_notification(
     if not recipients:
         logger.warning('Inventory email skipped because no active user has a registered email.')
         return
+
+    if not settings.DEBUG and settings.EMAIL_BACKEND.endswith('console.EmailBackend'):
+        # Without SMTP credentials Django only prints the e-mails. In production
+        # (e.g. on Vercel without EMAIL_HOST_USER / EMAIL_HOST_PASSWORD) nobody
+        # would notice, so say it loudly in the logs.
+        logger.error(
+            'Inventory emails are NOT delivered: SMTP is not configured '
+            '(set EMAIL_HOST_USER and EMAIL_HOST_PASSWORD). They are only printed to the log.'
+        )
 
     occurred_at = timezone.localtime().strftime('%d.%m.%Y %H:%M %Z')
     body = '\n'.join(

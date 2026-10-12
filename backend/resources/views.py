@@ -19,7 +19,11 @@ from .models import (
     StockMovement,
     resources,
 )
-from .notifications import schedule_inventory_notification
+from .notifications import (
+    is_low_stock,
+    schedule_inventory_notification,
+    schedule_low_stock_alert,
+)
 from .permissions import IsApprovedAppUser
 from .assistant import answer_question
 from .reporting import CENT, quarterly_sales, yearly_sales
@@ -75,6 +79,7 @@ class ResourceViewSet(
                     'Lagerplatz': f'{resource.shelf_number or "—"} / {resource.bin_number or "—"}',
                 },
             )
+            schedule_low_stock_alert(resource=resource, actor=self.request.user, was_low=False)
 
     @action(detail=True, methods=['post'])
     def sell(self, request, pk=None):
@@ -132,6 +137,11 @@ class ResourceViewSet(
                     'Bestand vorher': stock_before,
                     'Bestand danach': resource.amount,
                 },
+            )
+            schedule_low_stock_alert(
+                resource=resource,
+                actor=request.user,
+                was_low=is_low_stock(stock_before, resource.reorder_threshold),
             )
 
         return Response(
@@ -264,6 +274,7 @@ class ResourceViewSet(
             except resources.DoesNotExist as error:
                 raise NotFound('Der Artikel wurde nicht gefunden.') from error
 
+            was_low = is_low_stock(resource.amount, resource.reorder_threshold)
             update_fields = []
             previous_values = {
                 field_name: getattr(resource, field_name)
@@ -292,6 +303,7 @@ class ResourceViewSet(
                 actor=request.user,
                 details={'Änderungen': changed_values},
             )
+            schedule_low_stock_alert(resource=resource, actor=request.user, was_low=was_low)
 
         return Response(ResourceSerializer(resource).data)
 

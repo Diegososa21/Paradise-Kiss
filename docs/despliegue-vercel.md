@@ -90,11 +90,22 @@ cada consulta cruzaba el Atlántico. `"regions": ["dub1"]` las ejecuta en Dublí
 | `DJANGO_SECRET_KEY` | Creada el 05-10-2026 | Sí | Production, Preview |
 | `GEMINI_API_KEY` | Google AI Studio | No: sin ella el KI-Assistent usa la Basis-Analyse | — (pendiente) |
 | `DJANGO_DEBUG` | — | No definir (en Vercel debe ser `false`) | — |
-| `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD` | Gmail | Solo para enviar avisos por correo | — (pendiente) |
+| `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD` | Cuenta Gmail `noreply.paradisekiss@gmail.com` (contraseña de aplicación) | Sí, para los avisos por correo | Production, Preview |
 
 Para añadir una variable: Vercel → proyecto `paradise-kiss` → Settings →
 Environment Variables. Después hay que volver a desplegar (Deployments → ⋯ →
 Redeploy), porque Vercel lee las variables al compilar.
+
+### Avisos por correo en Vercel
+
+Sin `EMAIL_HOST_USER` y `EMAIL_HOST_PASSWORD`, Django usa su backend de consola:
+los avisos se generan pero solo se imprimen en los logs de Vercel (remitente
+`no-reply@localhost`) y nadie recibe nada. Pasó del 5 al 12 de octubre de 2026,
+cuando el equipo empezó a usar la web publicada en vez de `localhost`, donde
+`backend/.env` sí tiene esas credenciales.
+
+Desde el 12-10-2026 el backend escribe un error en los logs cuando está en
+producción sin SMTP: `Inventory emails are NOT delivered: SMTP is not configured`.
 
 ## Cómo comprobar un despliegue
 

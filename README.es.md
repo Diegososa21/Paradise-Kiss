@@ -145,6 +145,54 @@ cambiarla directamente:
 python manage.py changepassword sosa.diego
 ```
 
+### Acceso a Django (API y panel de administración)
+
+Django tiene dos puertas de entrada. Las dos necesitan el backend en marcha.
+
+**1. API navegable (Django REST framework)**
+
+Las sesiones se guardan por dirección: la que se abre en la app
+(`localhost:4200`) no existe en `127.0.0.1:8000`. Por eso, abrir
+`http://127.0.0.1:8000/tables/` directamente siempre responde
+`403 Authentication credentials were not provided`; es la protección funcionando.
+
+Para ver la API con tu sesión:
+
+1. Inicia sesión en la app: `http://localhost:4200`.
+2. En el mismo navegador abre `http://localhost:4200/api/tables/`.
+
+Desde ahí se navega a `/api/tables/resources/`, `/api/tables/inventory-sales/`,
+`/api/tables/sales-report/`, etc. Solo funciona con usuarios del grupo `team`.
+
+**2. Panel de administración (`/admin/`)**
+
+Sirve para ver y editar todas las tablas, los usuarios y los grupos:
+`http://127.0.0.1:8000/admin/`.
+
+- Se entra con una cuenta de **superusuario**, como `admin`. Las cuentas normales
+  de la app (`sosa.diego`, `friedrich.nico`…) no pueden entrar en el panel, y
+  `admin` no puede entrar en la app.
+- La contraseña de `admin` no está en el repositorio. Pídesela al propietario del
+  proyecto por un canal privado. Para poner una nueva:
+
+  ```bash
+  python manage.py changepassword admin
+  ```
+
+- Para tener una cuenta de administrador propia (recomendado: así queda
+  registrado quién hace cada cambio):
+
+  ```bash
+  python manage.py createsuperuser
+  ```
+
+**Cuidado:** el panel trabaja directamente sobre la base compartida de Supabase.
+Todo lo que se edite o borre ahí cambia los datos de todo el equipo y de la web
+publicada.
+
+El panel solo se usa en local. En Vercel, `/api/admin/` carga pero no funciona,
+porque Django genera sus enlaces y estilos sin el prefijo `/api`.
+
 ### Frontend
 
 ```bash
@@ -211,6 +259,14 @@ base de Supabase (tabla `auth_user`). Las direcciones no están escritas en el
 código: para añadir o quitar destinatarios basta con cambiar el correo del
 usuario.
 
+**Alerta de Meldebestand:** cuando lo disponible de un producto llega o baja de
+su Meldebestand (`Bestand ≤ Meldebestand`, la misma regla que "Niedriger
+Bestand" en la app), el equipo recibe además el correo "Meldebestand erreicht"
+con el stock, el Meldebestand, la GTIN, el lugar y el Lieferant. Se envía una
+sola vez, al cruzar el límite (por una venta, al subir el Meldebestand o al crear
+un artículo que ya está bajo); las ventas siguientes mientras siga bajo no
+repiten la alerta. Si se repone por encima y vuelve a bajar, se avisa de nuevo.
+
 En desarrollo, si no se configura SMTP, Django imprime los correos en la
 terminal del backend. Para enviarlos de verdad, configura el SMTP en
 `backend/.env` y en las variables del despliegue. Con Gmail solo hacen falta la
@@ -264,8 +320,9 @@ npm run build
 Django, y las funciones corren en Dublín (`dub1`), junto a Supabase.
 
 Variables necesarias en Vercel: `POSTGRES_URL` (de la integración
-Supabase–Vercel) y `DJANGO_SECRET_KEY`. Opcionales: `GEMINI_API_KEY`
-(KI-Assistent) y las de correo.
+Supabase–Vercel), `DJANGO_SECRET_KEY` y `EMAIL_HOST_USER` / `EMAIL_HOST_PASSWORD`
+(sin ellas los avisos por correo solo se imprimen en el log). Opcional:
+`GEMINI_API_KEY` (KI-Assistent).
 
 Detalles, causa del fallo de despliegue de septiembre/octubre de 2026 y cómo
 comprobar un despliegue: [docs/despliegue-vercel.md](docs/despliegue-vercel.md).
