@@ -376,9 +376,10 @@ class ResourceApiTests(APITestCase):
     )
     def test_notifies_team_after_resource_creation(self):
         mail.outbox.clear()
+        payload = {**self.api_payload(), 'amount': 20, 'reorder_threshold': 5}
 
         with self.captureOnCommitCallbacks(execute=True):
-            response = self.client.post('/tables/resources/', self.api_payload(), format='json')
+            response = self.client.post('/tables/resources/', payload, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(mail.outbox), 2)
@@ -781,6 +782,127 @@ class ResourceApiTests(APITestCase):
         response = self.client.get('/tables/sales-report/')
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @override_settings(
+        DEBUG=False,
+        EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend',
+        INVENTORY_EMAIL_NOTIFICATIONS_ENABLED=True,
+    )
+    def test_logs_an_error_when_production_has_no_smtp_configured(self):
+        resource = resources.objects.create(**self.resource_data)
+
+        with self.assertLogs('resources.notifications', level='ERROR') as logs:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.client.post(
+                    f'/tables/resources/{resource.id}/sell/', {'quantity': 1}, format='json'
+                )
+
+        self.assertIn('NOT delivered', logs.output[0])
+        self.assertIn('EMAIL_HOST_USER', logs.output[0])
+
+    def low_stock_mails(self):
+        return [message for message in mail.outbox if 'Meldebestand erreicht' in message.subject]
+
+    def create_stocked(self, amount=10, threshold=5):
+        return resources.objects.create(
+            **{**self.resource_data, 'amount': amount, 'reorder_threshold': threshold}
+        )
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        INVENTORY_EMAIL_NOTIFICATIONS_ENABLED=True,
+    )
+    def test_alerts_when_a_sale_reaches_the_reorder_threshold(self):
+        resource = self.create_stocked(amount=10, threshold=5)
+        mail.outbox.clear()
+
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(f'/tables/resources/{resource.id}/sell/', {'quantity': 5}, format='json')
+
+        alerts = self.low_stock_mails()
+        self.assertEqual(sorted(m.to[0] for m in alerts), ['diego@example.com', 'nico@example.com'])
+        self.assertIn('[Paradise Kiss Lager] Meldebestand erreicht: Denim jacket', alerts[0].subject)
+        self.assertIn('Verfügbar: 5 Stück', alerts[0].body)
+        self.assertIn('Meldebestand: 5 Stück', alerts[0].body)
+        self.assertIn(f'GTIN: {resource.gtin}', alerts[0].body)
+        self.assertIn('Lieferant: Paradise Kiss', alerts[0].body)
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        INVENTORY_EMAIL_NOTIFICATIONS_ENABLED=True,
+    )
+    def test_does_not_alert_again_while_the_product_stays_low(self):
+        resource = self.create_stocked(amount=4, threshold=5)
+        mail.outbox.clear()
+
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(f'/tables/resources/{resource.id}/sell/', {'quantity': 1}, format='json')
+
+        self.assertEqual(self.low_stock_mails(), [])
+        self.assertTrue(any('Verkauf gebucht' in m.subject for m in mail.outbox))
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        INVENTORY_EMAIL_NOTIFICATIONS_ENABLED=True,
+    )
+    def test_marks_a_sold_out_product_in_the_alert(self):
+        resource = self.create_stocked(amount=3, threshold=0)
+        mail.outbox.clear()
+
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(f'/tables/resources/{resource.id}/sell/', {'quantity': 3}, format='json')
+
+        self.assertIn('Verfügbar: 0 Stück (ausverkauft)', self.low_stock_mails()[0].body)
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        INVENTORY_EMAIL_NOTIFICATIONS_ENABLED=True,
+    )
+    def test_alerts_when_the_threshold_is_raised_above_the_stock(self):
+        resource = self.create_stocked(amount=10, threshold=5)
+        mail.outbox.clear()
+
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.patch(
+                f'/tables/resources/{resource.id}/inventory-settings/',
+                {'reorder_threshold': 12},
+                format='json',
+            )
+
+        self.assertEqual(len(self.low_stock_mails()), 2)
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        INVENTORY_EMAIL_NOTIFICATIONS_ENABLED=True,
+    )
+    def test_alerts_when_a_new_product_starts_below_the_threshold(self):
+        mail.outbox.clear()
+        payload = {**self.api_payload(), 'amount': 2, 'reorder_threshold': 5}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post('/tables/resources/', payload, format='json')
+
+        self.assertEqual(len(self.low_stock_mails()), 2)
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        INVENTORY_EMAIL_NOTIFICATIONS_ENABLED=True,
+    )
+    def test_restocks_and_cancellations_never_alert(self):
+        resource = self.create_stocked(amount=6, threshold=5)
+        sale_id = self.sell(resource, 2)  # 6 -> 4: alert (not captured here)
+        mail.outbox.clear()
+
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.delete(f'/tables/inventory-sales/{sale_id}/')
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(
+                f'/tables/resources/{resource.id}/restock/',
+                {'quantity': 1, 'purchase_date': '2026-10-12'},
+                format='json',
+            )
+
+        self.assertEqual(self.low_stock_mails(), [])
 
 class GtinTests(SimpleTestCase):
     def test_check_digit_matches_the_gs1_algorithm(self):
